@@ -4,47 +4,41 @@
 
 html, body, #root {
   height: 100%;
-  background: #0a0a0f;
+  background: #f6f7f9;
 }
 body {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #0a0a0f;
+  background-color: #f6f7f9;
   background-image:
-    radial-gradient(at 15% 0%, rgba(124,58,237,0.10) 0px, transparent 45%),
-    radial-gradient(at 85% 90%, rgba(59,130,246,0.06) 0px, transparent 45%);
-  color: #fafafa;
+    radial-gradient(at 10% 0%, rgba(124,58,237,0.05) 0px, transparent 40%),
+    radial-gradient(at 92% 0%, rgba(37,99,235,0.03) 0px, transparent 40%);
+  color: #0f172a;
 }
 
-/* React Flow dark theme tweaks */
+/* React Flow light-theme tweaks */
 .react-flow__edge-path { stroke-linecap: round; }
 .react-flow__attribution { display: none !important; }
 .react-flow__controls {
-  background: #14141d !important;
-  border: 1px solid #252533 !important;
-  box-shadow: 0 4px 16px -4px rgba(0,0,0,0.6) !important;
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 4px 16px -4px rgba(15,23,42,0.1) !important;
+  border-radius: 8px !important;
 }
 .react-flow__controls-button {
   background: transparent !important;
-  border-bottom: 1px solid #252533 !important;
-  color: #9ca3af !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  color: #475569 !important;
 }
-.react-flow__controls-button svg {
-  fill: #9ca3af !important;
-}
-.react-flow__controls-button:hover {
-  background: #1a1a25 !important;
-  color: #fafafa !important;
-}
-.react-flow__controls-button:hover svg {
-  fill: #fafafa !important;
-}
+.react-flow__controls-button svg { fill: #475569 !important; }
+.react-flow__controls-button:hover { background: #f3f4f6 !important; color: #0f172a !important; }
+.react-flow__controls-button:hover svg { fill: #0f172a !important; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #0a0a0f; }
-::-webkit-scrollbar-thumb { background: #252533; border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: #33333f; }
+::-webkit-scrollbar-track { background: #f6f7f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 /* Live pulse */
 @keyframes pulse-dot {

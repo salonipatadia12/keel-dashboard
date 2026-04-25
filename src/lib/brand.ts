@@ -4,21 +4,27 @@ export interface BrandIndex {
   score: number;
   label: 'At Risk' | 'Below Bar' | 'Solid' | 'Best-in-Class';
   perception: string[];
+  // Formula breakdown — surfaced in the UI so the number isn't a black box
+  breakdown: {
+    frictionInverse: number;
+    humanRatio: number;
+    clarityInverse: number;
+    formula: string;
+  };
 }
 
-const PERCEPTION_BAD = [
-  'Bureaucratic',
-  'Hard to reach',
-  'Indifferent to the caller',
-];
+const PERCEPTION_BAD = ['Bureaucratic', 'Hard to reach', 'Indifferent'];
 const PERCEPTION_GOOD = ['Modern', 'Responsive', 'Caller-first'];
 
 export function brandReputationIndex(friction: FrictionResult): BrandIndex {
-  const humanRatio = friction.humanReachableCount / friction.totalNodes;
+  const humanRatioPct = Math.round(
+    (friction.humanReachableCount / Math.max(friction.totalNodes, 1)) * 100
+  );
+  const frictionInverse = Math.max(0, 100 - friction.totalScore);
+  const clarityInverse = Math.max(0, 100 - friction.components.clarity);
+
   const score = Math.round(
-    0.5 * (100 - friction.totalScore) +
-      0.3 * humanRatio * 100 +
-      0.2 * (100 - friction.components.clarity)
+    0.5 * frictionInverse + 0.3 * humanRatioPct + 0.2 * clarityInverse
   );
 
   let label: BrandIndex['label'];
@@ -28,7 +34,26 @@ export function brandReputationIndex(friction: FrictionResult): BrandIndex {
   else label = 'Best-in-Class';
 
   const perception = score >= 60 ? PERCEPTION_GOOD : PERCEPTION_BAD;
-  return { score: Math.max(0, Math.min(100, score)), label, perception };
+
+  const formula =
+    `BRI = 50% × (100 − friction)\n     + 30% × human-reachability%\n     + 20% × (100 − clarity)\n` +
+    `\n` +
+    `    = 50% × ${frictionInverse}\n` +
+    `    + 30% × ${humanRatioPct}\n` +
+    `    + 20% × ${clarityInverse}\n` +
+    `    = ${score} / 100`;
+
+  return {
+    score: Math.max(0, Math.min(100, score)),
+    label,
+    perception,
+    breakdown: {
+      frictionInverse,
+      humanRatio: humanRatioPct,
+      clarityInverse,
+      formula,
+    },
+  };
 }
 
 export function brandNarrative(
@@ -41,5 +66,5 @@ export function brandNarrative(
   if (isRecommended) {
     return `Callers reach the right person in ${friction.maxDepth} levels with no dead ends. The brand reads as: modern, responsive, caller-first.`;
   }
-  return `Callers wait ${friction.maxDepth} menu levels and hit a dead-end on ${dePct}% of paths. The brand reads as: bureaucratic, hard to reach, indifferent to the caller.`;
+  return `Callers wait ${friction.maxDepth} menu levels and hit a dead-end on ${dePct}% of paths. The brand reads as: bureaucratic, hard to reach, indifferent.`;
 }

@@ -45,16 +45,16 @@ function layout(root: TreeNode): { nodes: Node[]; edges: Edge[] } {
         target: n.id,
         label: n.digit ? n.digit : undefined,
         type: 'smoothstep',
-        labelBgStyle: { fill: '#22222e', fillOpacity: 1 },
+        labelBgStyle: { fill: '#0f172a', fillOpacity: 1 },
         labelBgPadding: [6, 3],
         labelBgBorderRadius: 6,
         labelStyle: {
           fontSize: 11,
           fontFamily: 'JetBrains Mono, ui-monospace, monospace',
-          fill: '#fafafa',
+          fill: '#ffffff',
           fontWeight: 700,
         },
-        style: { stroke: '#3a3a48', strokeWidth: 1.5 },
+        style: { stroke: '#cbd5e1', strokeWidth: 1.5 },
       });
     }
     n.children.forEach((c) => walk(c, n.id));
@@ -87,7 +87,7 @@ export default function IvrFlow({ tree, height, variant = 'current' }: Props) {
       className="rounded-lg border border-line bg-bg2 relative overflow-hidden"
       style={{ height }}
     >
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted bg-surface/90 backdrop-blur px-2.5 py-1.5 rounded-md border border-line">
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted bg-surface backdrop-blur px-2.5 py-1.5 rounded-md border border-line shadow-sm">
         <span className={`w-1.5 h-1.5 rounded-full ${accentDot}`} />
         <span>drag · scroll to zoom</span>
       </div>
@@ -109,7 +109,7 @@ export default function IvrFlow({ tree, height, variant = 'current' }: Props) {
           minZoom={0.4}
           maxZoom={2}
         >
-          <Background gap={28} size={1} color="#1d1d28" />
+          <Background gap={28} size={1} color="#e5e7eb" />
           <Controls position="bottom-right" showInteractive={false} />
         </ReactFlow>
       </ReactFlowProvider>

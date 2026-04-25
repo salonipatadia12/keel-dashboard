@@ -1,9 +1,44 @@
-import type { FrictionResult, TreeNode } from './types';
+import type { FrictionResult, FrictionScoreRow, TreeNode } from './types';
 
 const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v));
 
 export interface FrictionInputs {
   hasOpZero: boolean;
+}
+
+// Convert a row from the Friction Score sheet (WorkflowC output) into the
+// FrictionResult shape the dashboard consumes. WorkflowC is the production
+// scorer — we trust its numbers when the row exists.
+export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
+  const score = Math.round(row.total_score);
+  let grade: FrictionResult['grade'];
+  if (typeof row.grade === 'string' && ['Excellent', 'Good', 'Fair', 'Poor'].includes(row.grade)) {
+    grade = row.grade as FrictionResult['grade'];
+  } else if (score <= 15) grade = 'Excellent';
+  else if (score <= 35) grade = 'Good';
+  else if (score <= 65) grade = 'Fair';
+  else grade = 'Poor';
+
+  return {
+    totalScore: score,
+    grade,
+    components: {
+      depth: row.depth_score,
+      options: row.options_score,
+      time: row.time_score,
+      dead_end: row.dead_end_score,
+      agent_access: row.agent_access_score,
+      clarity: row.clarity_score,
+      operator: row.operator_score,
+    },
+    maxDepth: row.max_depth,
+    avgOptions: Math.round(row.avg_options * 10) / 10,
+    totalNodes: row.total_nodes,
+    deadEndCount: row.dead_end_count,
+    voicemailCount: row.voicemail_count ?? 0,
+    humanReachableCount: row.human_reachable_count,
+    hasOpZero: row.operator_score === 0,
+  };
 }
 
 // Computes the friction score from a tree (post-pruning) plus a couple of

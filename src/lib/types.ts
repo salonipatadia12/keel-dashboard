@@ -66,6 +66,30 @@ export interface UniversityListRow {
   phone: number | string;
 }
 
+export interface FrictionScoreRow {
+  parent_call_id: string | null;
+  university: string;
+  total_score: number;
+  grade: 'Excellent' | 'Good' | 'Fair' | 'Poor' | string;
+  depth_score: number;
+  options_score: number;
+  time_score: number;
+  dead_end_score: number;
+  agent_access_score: number;
+  clarity_score: number;
+  operator_score: number;
+  max_depth: number;
+  avg_options: number;
+  total_nodes: number;
+  dead_end_count: number;
+  voicemail_count: number | null;
+  human_reachable_count: number;
+  worst_component: string | null;
+  recommendations: string | null;
+  executive_summary: string | null;
+  scored_at: string;
+}
+
 export interface RawData {
   source: string;
   generatedAt: string;
@@ -75,7 +99,7 @@ export interface RawData {
   scriptCapture: ScriptCaptureRow[];
   systemCharacteristics: SystemCharacteristicsRow[];
   tone: unknown[];
-  frictionScore: unknown[];
+  frictionScore: FrictionScoreRow[];
   discoveryQueue: unknown[];
 }
 
