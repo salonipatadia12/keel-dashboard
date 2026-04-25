@@ -1,0 +1,148 @@
+import { Handle, Position } from '@xyflow/react';
+import type { TreeNode } from '../lib/types';
+import { Globe, Phone, User, Voicemail, X, Info, Menu, Repeat } from './Icons';
+
+const STYLE: Record<
+  TreeNode['outcomeType'],
+  {
+    border: string;
+    chipBg: string;
+    chipText: string;
+    iconColor: string;
+    tag: string;
+    icon: React.FC<{ size?: number; className?: string }>;
+    glow: string;
+    accent: string;
+  }
+> = {
+  human: {
+    border: 'border-good/50',
+    chipBg: 'bg-good/15',
+    chipText: 'text-good',
+    iconColor: 'text-good',
+    tag: 'Human',
+    icon: User,
+    glow: 'shadow-[0_0_0_1px_rgba(16,185,129,0.18),0_8px_24px_-12px_rgba(16,185,129,0.4)]',
+    accent: 'bg-good',
+  },
+  voicemail: {
+    border: 'border-vm/50',
+    chipBg: 'bg-vm/15',
+    chipText: 'text-vm',
+    iconColor: 'text-vm',
+    tag: 'Voicemail',
+    icon: Voicemail,
+    glow: 'shadow-[0_0_0_1px_rgba(168,85,247,0.18),0_8px_24px_-12px_rgba(168,85,247,0.4)]',
+    accent: 'bg-vm',
+  },
+  dead_end: {
+    border: 'border-bad/50',
+    chipBg: 'bg-bad/15',
+    chipText: 'text-bad',
+    iconColor: 'text-bad',
+    tag: 'Dead end',
+    icon: X,
+    glow: 'shadow-[0_0_0_1px_rgba(244,63,94,0.18),0_8px_24px_-12px_rgba(244,63,94,0.4)]',
+    accent: 'bg-bad',
+  },
+  info: {
+    border: 'border-warn/50',
+    chipBg: 'bg-warn/15',
+    chipText: 'text-warn',
+    iconColor: 'text-warn',
+    tag: 'Info',
+    icon: Info,
+    glow: 'shadow-[0_0_0_1px_rgba(245,158,11,0.18),0_8px_24px_-12px_rgba(245,158,11,0.4)]',
+    accent: 'bg-warn',
+  },
+  submenu: {
+    border: 'border-sub/50',
+    chipBg: 'bg-sub/15',
+    chipText: 'text-sub',
+    iconColor: 'text-sub',
+    tag: 'Menu',
+    icon: Menu,
+    glow: 'shadow-[0_0_0_1px_rgba(59,130,246,0.18),0_8px_24px_-12px_rgba(59,130,246,0.4)]',
+    accent: 'bg-sub',
+  },
+  repeat: {
+    border: 'border-line2',
+    chipBg: 'bg-surface3',
+    chipText: 'text-muted',
+    iconColor: 'text-muted',
+    tag: 'Repeat',
+    icon: Repeat,
+    glow: '',
+    accent: 'bg-line2',
+  },
+};
+
+interface IvrNodeData {
+  node: TreeNode;
+}
+
+export default function IvrNode({ data }: { data: IvrNodeData }) {
+  const n = data.node;
+  const s = STYLE[n.outcomeType] || STYLE.submenu;
+  const Icon = s.icon;
+  const hasUrl = n.urls.length > 0;
+  const hasPhone = n.phones.length > 0;
+  const isRoot = n.id === 'root' || n.id === 'r:root';
+
+  return (
+    <div
+      className={`bg-surface2 rounded-xl border ${s.border} ${s.glow} w-[248px] overflow-hidden font-sans`}
+    >
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!bg-line2 !w-2 !h-2 !border-0 !-translate-y-1/2"
+      />
+      <div className={`h-1 w-full ${s.accent}`} />
+      <div className="px-3.5 py-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-mono text-[11px] tracking-wider text-muted2 font-semibold">
+            {isRoot ? 'ROOT' : n.digit ? `▸ ${n.digit}` : ' '}
+          </span>
+          <span
+            className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md ${s.chipBg} ${s.chipText} font-bold flex items-center gap-1`}
+          >
+            <Icon size={10} />
+            {s.tag}
+          </span>
+        </div>
+        <div className="text-[13.5px] leading-snug font-semibold text-ink line-clamp-2 mb-2">
+          {n.label}
+        </div>
+        {(hasUrl || hasPhone || n.durationSec) && (
+          <div className="flex items-center gap-3 text-[10.5px] text-muted">
+            {hasUrl && (
+              <span
+                className="flex items-center gap-1 text-warn font-medium"
+                title={n.urls.map((u) => u.value).join(', ')}
+              >
+                <Globe size={10} /> {n.urls.length} link{n.urls.length === 1 ? '' : 's'}
+              </span>
+            )}
+            {hasPhone && (
+              <span
+                className="flex items-center gap-1 text-sub font-medium"
+                title={n.phones.map((p) => p.value).join(', ')}
+              >
+                <Phone size={10} /> {n.phones.length}
+              </span>
+            )}
+            {n.durationSec ? (
+              <span className="font-mono text-muted2">{Math.round(n.durationSec)}s avg</span>
+            ) : null}
+          </div>
+        )}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!bg-line2 !w-2 !h-2 !border-0 !translate-y-1/2"
+      />
+    </div>
+  );
+}

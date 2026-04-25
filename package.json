@@ -1,0 +1,32 @@
+{
+  "name": "steve-pitch",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/build-data.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/build-data.mjs",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "build-data": "node scripts/build-data.mjs"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.3.5",
+    "dagre": "^0.8.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/dagre": "^0.7.52",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "xlsx": "^0.18.5"
+  }
+}
