@@ -24,11 +24,11 @@ function formatDate(iso: string): string {
 export default function TopBar({ university, phone, generatedAt }: Props) {
   const shortName = university.split(',')[0];
   return (
-    <div className="sticky top-0 z-30 backdrop-blur-xl bg-bg/80 border-b border-line">
+    <div className="sticky top-0 z-30 backdrop-blur-xl bg-bg/85 border-b border-line">
       <div className="max-w-[1440px] mx-auto px-8 h-14 flex items-center gap-4">
         <div className="flex items-center gap-2">
           <Logo size={22} />
-          <span className="text-sm font-semibold tracking-tight">Keel</span>
+          <span className="text-sm font-semibold tracking-tight text-ink">Keel</span>
           <span className="text-[10px] uppercase tracking-[0.18em] text-muted ml-1 px-2 py-0.5 rounded bg-surface border border-line">
             v1
           </span>
@@ -54,7 +54,7 @@ export default function TopBar({ university, phone, generatedAt }: Props) {
           <button className="text-[11px] text-ink2 hover:text-ink bg-surface hover:bg-surface2 border border-line rounded-md px-3 py-1.5 transition">
             Export
           </button>
-          <button className="text-[11px] text-bg bg-gradient-to-r from-accent to-sub hover:opacity-90 rounded-md px-3 py-1.5 transition font-medium">
+          <button className="text-[11px] text-white bg-gradient-to-r from-accent to-sub hover:opacity-90 rounded-md px-3 py-1.5 transition font-medium">
             Share report
           </button>
         </div>

@@ -1,6 +1,6 @@
 {
   "source": "IVR2.0.xlsx",
-  "generatedAt": "2026-04-25T05:01:56.517Z",
+  "generatedAt": "2026-04-25T19:50:09.523Z",
   "universityList": [
     {
       "university": "California State University, Sacramento",
@@ -3828,7 +3828,31 @@
       "path": "1>4>1>0"
     }
   ],
-  "frictionScore": [],
+  "frictionScore": [
+    {
+      "parent_call_id": null,
+      "university": "California State University, Sacramento",
+      "total_score": 58,
+      "grade": "Fair",
+      "depth_score": 25,
+      "options_score": 100,
+      "time_score": 100,
+      "dead_end_score": 30,
+      "agent_access_score": 26,
+      "clarity_score": 80,
+      "operator_score": 0,
+      "max_depth": 4,
+      "avg_options": 21.2,
+      "total_nodes": 27,
+      "dead_end_count": 8,
+      "voicemail_count": null,
+      "human_reachable_count": 12,
+      "worst_component": "Time to Resolution",
+      "recommendations": "Reduce options per level — consolidate similar departments; Reduce time-to-resolution — add shortcuts to common departments; Simplify prompts — reduce cognitive load per menu",
+      "executive_summary": "**Executive Summary – California State University, Sacramento IVR Assessment**  \n\nDear University Leadership,  \n\nOur evaluation of the current Interactive Voice Response (IVR) system yields a Friction Score of **58 / 100**, placing the experience in the “fair” range. The system’s strongest attribute is its **shallow menu depth**—the deepest path is only four levels, scoring **25 / 100** (well below the worst‑case threshold). Additionally, callers have relatively good access to a live agent, with **12 of the 27 distinct navigation paths (≈44 %)** reaching a human representative, reflected in an **Agent Accessibility score of 26 / 100**. These factors help prevent callers from becoming trapped in overly long hierarchies and ensure that a reasonable portion of calls can be escalated quickly.  \n\nHowever, several critical weaknesses are driving the overall friction. The IVR presents an **average of 21.2 options per menu**, earning an **Options Complexity score of 100 / 100**. This overload makes it difficult for callers to locate the appropriate selection and contributes to the **Time to Resolution score of 100 / 100**, the single worst‑performing metric. Eight dead ends (30 % of the 27 nodes) further exacerbate the problem, as callers can be left without a clear path forward. Prompt clarity is also low (**80 / 100**), and there are **no dedicated operator hours** (Operator Availability = 0), meaning that callers cannot reliably expect live assistance during peak periods.  \n\nTo move the IVR from “fair” to “good,” we recommend the following three actions, each with an estimated impact on key performance indicators:\n\n1. **Condense and Prioritize Options** – Reduce the average number of choices per menu from 21.2 to **≤ 7** by grouping related services and eliminating rarely used selections. A leaner menu is expected to cut the average call handling time by **15‑20 %** and lower the Time to Resolution score to under **70 / 100**.  \n\n2. **Introduce a Direct‑to‑Agent Shortcut** – Add a clearly spoken “Press 0 at any time to speak with a live representative” option on the first two menu levels. This will increase the percentage of calls reaching an agent from **44 % to ≥ 70 %**, improve Agent Accessibility to **≈ 10 / 100**, and reduce dead‑end occurrences by **50 %**.  \n\n3. **Enhance Prompt Clarity and Provide Agent Hours** – Rewrite all prompts to use concise, action‑oriented language and publish agent availability windows (e.g., “Our advisors are available 8 am‑5 pm, Monday‑Friday”). Improving prompt clarity from **80 → 50 / 100** and establishing operator hours can reduce caller confusion, lower abandonment rates, and further improve the overall Friction Score by **10‑12 points**.  \n\nImplementing these targeted improvements should substantially shorten the time callers spend navigating the IVR, increase satisfaction, and free up staff resources by routing fewer calls to dead ends. We are available to assist with design, testing, and rollout to ensure a smooth transition.  \n\nRespectfully,  \n\n*IVR Consulting Team*",
+      "scored_at": "2026-04-25T18:52:51.114Z"
+    }
+  ],
   "discoveryQueue": [
     {
       "run_id": 1776964497839,

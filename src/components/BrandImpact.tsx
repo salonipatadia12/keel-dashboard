@@ -27,15 +27,10 @@ function Card({
 
   return (
     <div
-      className={`rounded-2xl p-5 relative overflow-hidden ${
-        isAfter
-          ? 'bg-gradient-to-br from-good/15 via-surface to-surface border border-good/25'
-          : 'bg-surface border border-line'
-      } shadow-card`}
+      className={`rounded-2xl p-5 relative overflow-hidden shadow-card border ${
+        isAfter ? 'bg-gradient-to-br from-good/5 via-surface to-surface border-good/30' : 'bg-surface border-line'
+      }`}
     >
-      {isAfter && (
-        <div className="absolute top-0 right-0 w-40 h-40 bg-good/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-      )}
       <div className="relative">
         <div className="flex items-center justify-between mb-3">
           <span
@@ -46,10 +41,10 @@ function Card({
             {title}
           </span>
           <span
-            className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+            className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border font-semibold ${
               isAfter
-                ? 'border-good/30 text-good bg-good/10'
-                : 'border-bad/30 text-bad bg-bad/10'
+                ? 'border-good/35 text-good bg-good/10'
+                : 'border-bad/35 text-bad bg-bad/10'
             }`}
           >
             {index.label}
@@ -57,38 +52,38 @@ function Card({
         </div>
 
         <div className="flex items-baseline gap-2 mb-3">
-          <span
-            className={`text-5xl font-semibold tabular-nums tracking-tight ${
-              isAfter ? 'text-ink' : 'text-ink2'
-            }`}
-          >
+          <span className="text-5xl font-bold tabular-nums tracking-tight text-ink">
             {index.score}
           </span>
           <span className="text-xs text-muted2">/100</span>
         </div>
 
-        <p
-          className={`text-[12.5px] leading-relaxed mb-4 ${
-            isAfter ? 'text-ink2' : 'text-muted'
-          }`}
-        >
-          {narrative}
-        </p>
+        <p className="text-[12.5px] leading-relaxed mb-4 text-ink2">{narrative}</p>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 mb-4">
           {tags.map((p) => (
             <span
               key={p}
               className={`text-[10px] uppercase tracking-wide px-2 py-1 rounded-full font-semibold border ${
                 isAfter
-                  ? 'bg-good/15 text-good border-good/30'
-                  : 'bg-bad/10 text-bad border-bad/30'
+                  ? 'bg-good/10 text-good border-good/35'
+                  : 'bg-bad/10 text-bad border-bad/35'
               }`}
             >
               {p}
             </span>
           ))}
         </div>
+
+        <details className="group">
+          <summary className="text-[10px] text-muted hover:text-ink2 cursor-pointer list-none flex items-center gap-1">
+            <span className="group-open:rotate-90 transition-transform inline-block">▸</span>
+            <span>How {index.score} is calculated</span>
+          </summary>
+          <pre className="mt-2 text-[10px] text-muted2 font-mono leading-snug bg-surface2/70 border border-line/70 rounded p-2.5 whitespace-pre-wrap">
+            {index.breakdown.formula}
+          </pre>
+        </details>
       </div>
     </div>
   );
@@ -109,18 +104,18 @@ export default function BrandImpact({
           <Shield size={14} />
         </div>
         <div className="flex-1">
-          <h2 className="text-base font-semibold tracking-tight">Brand impact</h2>
+          <h2 className="text-base font-semibold tracking-tight text-ink">Brand impact</h2>
           <p className="text-[11px] text-muted leading-snug">
             How callers perceive {university} based on what their phone tree
-            does to them.
+            does to them. Click "How it's calculated" to see the math.
           </p>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-good/10 border border-good/20 text-good">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-good/10 border border-good/25 text-good">
           <TrendingUp size={13} />
           <span className="text-xs font-semibold tabular-nums">+{delta} pts</span>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card
           title={`${university} today`}
           index={current}

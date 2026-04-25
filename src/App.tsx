@@ -2,11 +2,10 @@ import { useMemo } from 'react';
 import raw from './data.json';
 import type { RawData } from './lib/types';
 import { buildPathTree } from './lib/pathTree';
-import { calculateFriction } from './lib/friction';
+import { calculateFriction, frictionFromSheet } from './lib/friction';
 import { buildRecommendedTree } from './lib/recommend';
 import { brandNarrative, brandReputationIndex } from './lib/brand';
 import TopBar from './components/TopBar';
-import HeroScore from './components/HeroScore';
 import MetricCards from './components/MetricCards';
 import TreePanel from './components/TreePanel';
 import BrandImpact from './components/BrandImpact';
@@ -16,9 +15,8 @@ import { Activity } from './components/Icons';
 const data = raw as unknown as RawData;
 
 function treeHeight(maxDepth: number): number {
-  // (root + maxDepth levels) × node + (maxDepth) × ranksep + buffer
   const levels = maxDepth + 1;
-  return Math.max(380, levels * 92 + maxDepth * 56 + 60);
+  return Math.max(360, levels * 92 + maxDepth * 64 + 80);
 }
 
 export default function App() {
@@ -40,7 +38,16 @@ export default function App() {
     );
     const hasOpZero = sysCharForUni.some((s) => s.has_operator_zero === true);
 
-    const currentFriction = calculateFriction(built.root, { hasOpZero });
+    // Prefer the WorkflowC scorer's output (production-grade, in
+    // data.frictionScore). Fall back to the in-browser scorer if that sheet
+    // hasn't been populated yet.
+    const sheetRow = data.frictionScore.find(
+      (r) => r.university === universityName
+    );
+    const currentFriction = sheetRow
+      ? frictionFromSheet(sheetRow)
+      : calculateFriction(built.root, { hasOpZero });
+
     const recommended = buildRecommendedTree();
 
     const webRefs = built.allNodes.flatMap((n) => n.urls);
@@ -59,6 +66,7 @@ export default function App() {
       phoneRefs,
       brandCurrent,
       brandRecommended,
+      sheetRow,
     };
   }, []);
 
@@ -72,14 +80,16 @@ export default function App() {
     phoneRefs,
     brandCurrent,
     brandRecommended,
+    sheetRow,
   } = view;
 
   const shortName = universityName.split(',')[0];
 
-  // Trees are now stacked full-width so they breathe. Pick a generous height
-  // that comfortably fits the deeper tree.
   const currentHeight = Math.max(640, treeHeight(currentFriction.maxDepth));
   const recommendedHeight = Math.max(560, treeHeight(recommended.friction.maxDepth));
+
+  // Plain-English breakdown for the Brand Reputation tile's formula popover.
+  const brandFormula = brandCurrent.breakdown.formula;
 
   return (
     <div className="min-h-screen">
@@ -90,18 +100,24 @@ export default function App() {
       />
 
       <main className="max-w-[1440px] mx-auto px-8 py-7">
-        {/* Page title row */}
-        <div className="flex items-end justify-between mb-6 flex-wrap gap-3">
+        {/* Compact heading row — no oversized hero */}
+        <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Activity size={13} className="text-accent" />
               <span className="text-[10px] uppercase tracking-[0.2em] text-muted font-semibold">
-                IVR opportunity report
+                IVR Opportunity Report
               </span>
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight leading-none">
+            <h1 className="text-3xl font-semibold tracking-tight leading-none text-ink">
               {universityName}
             </h1>
+            <p className="text-sm text-muted mt-2 max-w-2xl leading-snug">
+              Where every caller-facing path stands today, and where Keel takes
+              it. Numbers below come straight from{' '}
+              {sheetRow ? 'the production friction scorer (WorkflowC)' : 'the in-browser scorer'}
+              .
+            </p>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-muted">
             <span>
@@ -127,38 +143,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Hero + Metrics row */}
-        <div className="grid grid-cols-12 gap-4 mb-6">
-          <div className="col-span-12 lg:col-span-8">
-            <HeroScore
-              university={universityName}
-              current={currentFriction}
-              recommended={recommended.friction}
-            />
-          </div>
-          <div className="col-span-12 lg:col-span-4 grid grid-rows-2 gap-4">
-            <div className="rounded-2xl bg-surface border border-line shadow-card p-4">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted font-semibold mb-3">
-                Friction breakdown
-              </div>
-              <FrictionBars current={currentFriction} recommended={recommended.friction} />
-            </div>
-            <div className="rounded-2xl bg-surface border border-line shadow-card p-4">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted font-semibold mb-2">
-                System characteristics
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <Stat label="Live operator" value={currentFriction.humanReachableCount > 0 ? 'Yes' : 'No'} good={currentFriction.humanReachableCount > 0} />
-                <Stat label="Press 0 → operator" value={currentFriction.hasOpZero ? 'Yes' : 'No'} good={currentFriction.hasOpZero} />
-                <Stat label="Voicemail" value={currentFriction.voicemailCount > 0 ? 'Yes' : 'No'} good={currentFriction.voicemailCount > 0} />
-                <Stat label="Avg options/menu" value={currentFriction.avgOptions.toFixed(1)} good={currentFriction.avgOptions <= 5} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Metric cards row */}
-        <div className="mb-6">
+        {/* KPI strip — top of page, no hero block */}
+        <div className="mb-8">
           <MetricCards
             current={currentFriction}
             recommended={recommended.friction}
@@ -166,17 +152,39 @@ export default function App() {
             phoneRefs={phoneRefs}
             brandCurrent={brandCurrent}
             brandRecommended={brandRecommended}
+            brandFormula={brandFormula}
           />
         </div>
 
-        {/* Tree comparison — stacked full-width so trees stay readable */}
+        {/* Worst component callout — what specifically is broken */}
+        {sheetRow?.worst_component && (
+          <div className="mb-6 rounded-xl bg-surface border border-line shadow-card p-4 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-md bg-bad/10 border border-bad/25 flex items-center justify-center text-bad shrink-0 mt-0.5">
+              <Activity size={14} />
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-muted font-semibold mb-1">
+                Worst component
+              </div>
+              <div className="text-sm font-semibold text-ink">
+                {sheetRow.worst_component}
+              </div>
+              {sheetRow.recommendations && (
+                <div className="text-[12px] text-ink2 leading-relaxed mt-1.5 max-w-3xl">
+                  {sheetRow.recommendations}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tree comparison stacked full-width — graphs stay readable */}
         <div className="space-y-4 mb-6">
           <TreePanel
             variant="current"
             tree={built.root}
             friction={currentFriction}
             height={currentHeight}
-            prunedCount={built.prunedCount}
           />
           <TreePanel
             variant="recommended"
@@ -209,62 +217,6 @@ export default function App() {
           Keel · Voice agents that don't make callers wait
         </div>
       </main>
-    </div>
-  );
-}
-
-function Stat({ label, value, good }: { label: string; value: string; good: boolean }) {
-  return (
-    <div className="flex items-center justify-between bg-bg2 border border-line rounded-md px-2.5 py-1.5">
-      <span className="text-muted">{label}</span>
-      <span className={`font-semibold ${good ? 'text-good' : 'text-bad2'}`}>{value}</span>
-    </div>
-  );
-}
-
-function FrictionBars({
-  current,
-  recommended,
-}: {
-  current: import('./lib/types').FrictionResult;
-  recommended: import('./lib/types').FrictionResult;
-}) {
-  const rows: { key: keyof import('./lib/types').FrictionComponents; label: string }[] = [
-    { key: 'depth', label: 'Depth' },
-    { key: 'time', label: 'Time' },
-    { key: 'dead_end', label: 'Dead-ends' },
-    { key: 'agent_access', label: 'Agent access' },
-    { key: 'clarity', label: 'Clarity' },
-    { key: 'operator', label: 'Operator' },
-  ];
-  return (
-    <div className="space-y-2">
-      {rows.map(({ key, label }) => {
-        const c = Math.round(current.components[key] || 0);
-        const r = Math.round(recommended.components[key] || 0);
-        return (
-          <div key={key} className="text-[10px]">
-            <div className="flex items-center justify-between text-muted mb-0.5">
-              <span>{label}</span>
-              <span className="font-mono tabular-nums">
-                <span className={c > 50 ? 'text-bad2' : c > 25 ? 'text-warn' : 'text-muted'}>{c}</span>
-                <span className="text-line2 mx-1">→</span>
-                <span className="text-good">{r}</span>
-              </span>
-            </div>
-            <div className="relative h-1.5 bg-surface2 rounded-full overflow-hidden">
-              <div
-                className="absolute left-0 top-0 h-full bg-bad/40"
-                style={{ width: `${c}%` }}
-              />
-              <div
-                className="absolute left-0 top-0 h-full bg-good"
-                style={{ width: `${r}%` }}
-              />
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }

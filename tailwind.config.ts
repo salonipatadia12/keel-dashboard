@@ -5,42 +5,42 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Dark dashboard palette
-        bg: '#0a0a0f',
-        bg2: '#0e0e15',
-        surface: '#14141d',
-        surface2: '#1a1a25',
-        surface3: '#22222e',
-        line: '#252533',
-        line2: '#33333f',
-        ink: '#fafafa',
-        ink2: '#e5e7eb',
-        muted: '#9ca3af',
-        muted2: '#6b7280',
+        // Light dashboard palette (slate-tinted)
+        bg: '#f6f7f9',
+        bg2: '#fafbfc',
+        surface: '#ffffff',
+        surface2: '#f3f4f6',
+        surface3: '#e5e7eb',
+        line: '#e5e7eb',
+        line2: '#cbd5e1',
+        ink: '#0f172a',
+        ink2: '#1f2937',
+        muted: '#475569',
+        muted2: '#64748b',
         // Accents
-        accent: '#a78bfa', // violet 400
-        accent2: '#7c3aed', // violet 600
-        good: '#10b981',
-        good2: '#34d399',
-        warn: '#f59e0b',
-        warn2: '#fbbf24',
-        bad: '#f43f5e',
-        bad2: '#fb7185',
-        sub: '#3b82f6',
-        sub2: '#60a5fa',
-        vm: '#a855f7',
+        accent: '#7c3aed', // violet 600 (Keel brand)
+        accent2: '#5b21b6',
+        good: '#0d9f6e',
+        good2: '#10b981',
+        warn: '#d97706',
+        warn2: '#f59e0b',
+        bad: '#dc2626',
+        bad2: '#ef4444',
+        sub: '#2563eb',
+        sub2: '#3b82f6',
+        vm: '#9333ea',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
-        card: '0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px -8px rgba(0,0,0,0.5)',
-        glow: '0 0 24px -4px rgba(167,139,250,0.4)',
+        card: '0 1px 0 rgba(15,23,42,0.04), 0 1px 3px rgba(15,23,42,0.06), 0 8px 24px -10px rgba(15,23,42,0.08)',
+        glow: '0 0 24px -4px rgba(124,58,237,0.25)',
       },
       backgroundImage: {
-        'mesh-dark':
-          'radial-gradient(at 20% 0%, rgba(124,58,237,0.08) 0px, transparent 50%), radial-gradient(at 80% 100%, rgba(59,130,246,0.06) 0px, transparent 50%)',
+        'mesh-light':
+          'radial-gradient(at 12% 0%, rgba(124,58,237,0.06) 0px, transparent 45%), radial-gradient(at 88% 0%, rgba(37,99,235,0.04) 0px, transparent 45%)',
       },
     },
   },

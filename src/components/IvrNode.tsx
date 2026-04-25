@@ -11,68 +11,61 @@ const STYLE: Record<
     iconColor: string;
     tag: string;
     icon: React.FC<{ size?: number; className?: string }>;
-    glow: string;
     accent: string;
   }
 > = {
   human: {
-    border: 'border-good/50',
-    chipBg: 'bg-good/15',
+    border: 'border-good/40',
+    chipBg: 'bg-good/10',
     chipText: 'text-good',
     iconColor: 'text-good',
     tag: 'Human',
     icon: User,
-    glow: 'shadow-[0_0_0_1px_rgba(16,185,129,0.18),0_8px_24px_-12px_rgba(16,185,129,0.4)]',
     accent: 'bg-good',
   },
   voicemail: {
-    border: 'border-vm/50',
-    chipBg: 'bg-vm/15',
+    border: 'border-vm/40',
+    chipBg: 'bg-vm/10',
     chipText: 'text-vm',
     iconColor: 'text-vm',
     tag: 'Voicemail',
     icon: Voicemail,
-    glow: 'shadow-[0_0_0_1px_rgba(168,85,247,0.18),0_8px_24px_-12px_rgba(168,85,247,0.4)]',
     accent: 'bg-vm',
   },
   dead_end: {
-    border: 'border-bad/50',
-    chipBg: 'bg-bad/15',
+    border: 'border-bad/40',
+    chipBg: 'bg-bad/10',
     chipText: 'text-bad',
     iconColor: 'text-bad',
     tag: 'Dead end',
     icon: X,
-    glow: 'shadow-[0_0_0_1px_rgba(244,63,94,0.18),0_8px_24px_-12px_rgba(244,63,94,0.4)]',
     accent: 'bg-bad',
   },
   info: {
-    border: 'border-warn/50',
-    chipBg: 'bg-warn/15',
+    border: 'border-warn/40',
+    chipBg: 'bg-warn/10',
     chipText: 'text-warn',
     iconColor: 'text-warn',
     tag: 'Info',
     icon: Info,
-    glow: 'shadow-[0_0_0_1px_rgba(245,158,11,0.18),0_8px_24px_-12px_rgba(245,158,11,0.4)]',
     accent: 'bg-warn',
   },
   submenu: {
-    border: 'border-sub/50',
-    chipBg: 'bg-sub/15',
+    border: 'border-sub/40',
+    chipBg: 'bg-sub/10',
     chipText: 'text-sub',
     iconColor: 'text-sub',
     tag: 'Menu',
     icon: Menu,
-    glow: 'shadow-[0_0_0_1px_rgba(59,130,246,0.18),0_8px_24px_-12px_rgba(59,130,246,0.4)]',
     accent: 'bg-sub',
   },
   repeat: {
     border: 'border-line2',
-    chipBg: 'bg-surface3',
+    chipBg: 'bg-surface2',
     chipText: 'text-muted',
     iconColor: 'text-muted',
     tag: 'Repeat',
     icon: Repeat,
-    glow: '',
     accent: 'bg-line2',
   },
 };
@@ -91,7 +84,7 @@ export default function IvrNode({ data }: { data: IvrNodeData }) {
 
   return (
     <div
-      className={`bg-surface2 rounded-xl border ${s.border} ${s.glow} w-[248px] overflow-hidden font-sans`}
+      className={`bg-surface rounded-xl border ${s.border} shadow-card w-[248px] overflow-hidden font-sans`}
     >
       <Handle
         type="target"
