@@ -158,23 +158,42 @@ export default function App() {
 
         {/* Worst component callout — what specifically is broken */}
         {sheetRow?.worst_component && (
-          <div className="mb-6 rounded-xl bg-surface border border-line shadow-card p-4 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-md bg-bad/10 border border-bad/25 flex items-center justify-center text-bad shrink-0 mt-0.5">
-              <Activity size={14} />
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.16em] text-muted font-semibold mb-1">
-                Worst component
+          <div className="mb-6 rounded-xl bg-surface border border-line shadow-card p-4">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-8 h-8 rounded-md bg-bad/10 border border-bad/25 flex items-center justify-center text-bad shrink-0 mt-0.5">
+                <Activity size={14} />
               </div>
-              <div className="text-sm font-semibold text-ink">
-                {sheetRow.worst_component}
-              </div>
-              {sheetRow.recommendations && (
-                <div className="text-[12px] text-ink2 leading-relaxed mt-1.5 max-w-3xl">
-                  {sheetRow.recommendations}
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.16em] text-muted font-semibold mb-1">
+                  Worst component
                 </div>
-              )}
+                <div className="text-sm font-semibold text-ink">
+                  {sheetRow.worst_component}
+                </div>
+              </div>
             </div>
+            {sheetRow.recommendations && (
+              <ul className="space-y-1.5 pl-11 max-w-3xl">
+                {sheetRow.recommendations
+                  .split(';')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((line, i) => {
+                    const cleaned = line.replace(/\s+[—–]\s+/g, ': ');
+                    return (
+                      <li
+                        key={i}
+                        className="flex items-start gap-2 text-[12.5px] text-ink2 leading-snug"
+                      >
+                        <span className="font-mono text-[10px] text-muted2 mt-1 shrink-0">
+                          0{i + 1}
+                        </span>
+                        <span>{cleaned}</span>
+                      </li>
+                    );
+                  })}
+              </ul>
+            )}
           </div>
         )}
 

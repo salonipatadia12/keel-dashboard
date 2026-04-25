@@ -35,17 +35,9 @@ export default function Pitch({
           <span className="bg-good/10 text-good border border-good/30 px-2 py-0.5 rounded-md font-semibold">
             {drop} points
           </span>
-          , erases every dead-end, and gets every caller to the right person —
-          or the right answer — in two key presses or fewer.
+          , erases every dead end, and gets every caller to the right person
+          (or the right answer) in two key presses or fewer.
         </p>
-        <div className="mt-6 flex items-center gap-3">
-          <button className="text-sm text-white bg-gradient-to-r from-accent to-sub hover:opacity-90 rounded-lg px-5 py-2.5 transition font-semibold shadow-glow">
-            Book a 15-min walkthrough
-          </button>
-          <button className="text-sm text-ink2 hover:text-ink bg-surface2 hover:bg-surface3 border border-line rounded-lg px-5 py-2.5 transition font-medium">
-            Download as PDF
-          </button>
-        </div>
       </div>
     </section>
   );
