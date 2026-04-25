@@ -110,9 +110,9 @@ export interface RecommendResult {
 }
 
 const BASE_RATIONALE = [
-  'Capped depth at 3 — callers reach the right person in three key presses or fewer (down from 4).',
-  'Added "press 0 for operator" at every level — no caller is ever trapped.',
-  'Eliminated all dead-ends — every option transfers to a human or returns to the menu.',
+  'Capped depth at 3 so callers reach the right person in three key presses or fewer (down from 4).',
+  'Added "press 0 for operator" at every level so no caller is ever trapped.',
+  'Eliminated every dead end. Every option transfers to a human or returns to the menu.',
   'Bucketed redundant menu options into 4 clear intent groups.',
   'Kept one info-only branch (Hours & locations) so callers can self-serve outside business hours.',
 ];

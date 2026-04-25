@@ -51,12 +51,6 @@ export default function TopBar({ university, phone, generatedAt }: Props) {
           </div>
           <div className="h-5 w-px bg-line" />
           <div className="text-[11px] font-mono text-muted">{formatPhone(phone)}</div>
-          <button className="text-[11px] text-ink2 hover:text-ink bg-surface hover:bg-surface2 border border-line rounded-md px-3 py-1.5 transition">
-            Export
-          </button>
-          <button className="text-[11px] text-white bg-gradient-to-r from-accent to-sub hover:opacity-90 rounded-md px-3 py-1.5 transition font-medium">
-            Share report
-          </button>
         </div>
       </div>
     </div>
