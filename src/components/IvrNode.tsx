@@ -1,6 +1,6 @@
 import { Handle, Position } from '@xyflow/react';
 import type { TreeNode } from '../lib/types';
-import { Globe, Phone, User, Voicemail, X, Info, Menu, Repeat } from './Icons';
+import { Globe, Phone, User, Voicemail, X, Info, Menu, Repeat, Sparkles } from './Icons';
 
 const STYLE: Record<
   TreeNode['outcomeType'],
@@ -67,6 +67,15 @@ const STYLE: Record<
     tag: 'Repeat',
     icon: Repeat,
     accent: 'bg-line2',
+  },
+  ai: {
+    border: 'border-accent/45',
+    chipBg: 'bg-accent/10',
+    chipText: 'text-accent',
+    iconColor: 'text-accent',
+    tag: 'AI',
+    icon: Sparkles,
+    accent: 'bg-accent',
   },
 };
 

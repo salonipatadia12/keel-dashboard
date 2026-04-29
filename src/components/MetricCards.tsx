@@ -43,83 +43,87 @@ export default function MetricCards({
     TYPICAL_STUDENT_QUESTIONS.map((q, i) => `  ${i + 1}. ${q}`).join('\n');
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
-      <KpiTile
-        icon={<Activity size={14} />}
-        label="Friction Score"
-        today={{ value: current.totalScore, caption: current.grade }}
-        ivr={{ value: recommended.totalScore, caption: recommended.grade }}
-        voice={{ value: voiceAgent.totalScore, caption: voiceAgent.grade }}
-        delta={{ value: `−${frictionDelta} pts`, tone: 'good' }}
-        emphasis
-      />
-      <KpiTile
-        icon={<HelpCircle size={14} />}
-        label="Question Coverage"
-        today={{
-          value: `${todayQuestionsCovered} / ${Q}`,
-          caption:
-            todayQuestionsCovered === 0
-              ? 'all routed to human'
-              : `${Q - todayQuestionsCovered} still need a human`,
-        }}
-        ivr={{
-          value: `${ivrCovered} / ${Q}`,
-          caption: 'FAQ leaf handles basics',
-        }}
-        voice={{
-          value: `${voiceCovered} / ${Q}`,
-          caption: 'self-resolved end-to-end',
-        }}
-        delta={{ value: `+${coverageDelta} answered`, tone: 'good' }}
-        emphasis
-        formula={coverageFormula}
-      />
-      <KpiTile
-        icon={<Layers size={14} />}
-        label="Menu Levels"
-        today={{ value: current.maxDepth, caption: 'levels deep' }}
-        ivr={{ value: recommended.maxDepth, caption: 'flat menu' }}
-        voice={{ value: voiceAgent.maxDepth, caption: 'no menu — speak' }}
-        delta={{
-          value: `−${current.maxDepth - voiceAgent.maxDepth}`,
-          tone: 'good',
-        }}
-      />
-      <KpiTile
-        icon={<Globe size={14} />}
-        label="Web Redirects"
-        today={{ value: webRefs.length, caption: 'links spoken to caller' }}
-        ivr={{ value: 0, caption: 'no offload' }}
-        voice={{ value: 0, caption: 'resolved in-call' }}
-        delta={{
-          value: webRefs.length > 0 ? `−${webRefs.length}` : '—',
-          tone: webRefs.length > 0 ? 'good' : 'neutral',
-        }}
-        refs={webRefs}
-      />
-      <KpiTile
-        icon={<Phone size={14} />}
-        label="Phone Transfers"
-        today={{ value: phoneRefs.length, caption: 'numbers given mid-call' }}
-        ivr={{ value: 0, caption: 'no offload' }}
-        voice={{ value: 0, caption: 'no offload' }}
-        delta={{
-          value: phoneRefs.length > 0 ? `−${phoneRefs.length}` : '—',
-          tone: phoneRefs.length > 0 ? 'good' : 'neutral',
-        }}
-        refs={phoneRefs}
-      />
-      <KpiTile
-        icon={<Sparkles size={14} />}
-        label="Brand Reputation"
-        today={{ value: brandCurrent.score, caption: brandCurrent.label }}
-        ivr={{ value: brandRecommended.score, caption: brandRecommended.label }}
-        voice={{ value: brandVoice.score, caption: brandVoice.label }}
-        delta={{ value: `+${brandDelta} pts`, tone: 'good' }}
-        emphasis
-        formula={brandFormula}
-      />
+    <div className="space-y-3">
+      {/* Hero row — the three numbers the pitch lives on */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <KpiTile
+          icon={<Activity size={14} />}
+          label="Friction Score"
+          today={{ value: current.totalScore, caption: current.grade }}
+          ivr={{ value: recommended.totalScore, caption: recommended.grade }}
+          voice={{ value: voiceAgent.totalScore, caption: voiceAgent.grade }}
+          delta={{ value: `−${frictionDelta} pts`, tone: 'good' }}
+          emphasis
+        />
+        <KpiTile
+          icon={<HelpCircle size={14} />}
+          label="Question Coverage"
+          today={{
+            value: `${todayQuestionsCovered}/${Q}`,
+            caption: todayQuestionsCovered === 0 ? 'all need human' : 'partial',
+          }}
+          ivr={{
+            value: `${ivrCovered}/${Q}`,
+            caption: 'FAQ leaf',
+          }}
+          voice={{
+            value: `${voiceCovered}/${Q}`,
+            caption: 'AI self-resolves',
+          }}
+          delta={{ value: `+${coverageDelta} answered`, tone: 'good' }}
+          emphasis
+          formula={coverageFormula}
+        />
+        <KpiTile
+          icon={<Sparkles size={14} />}
+          label="Brand Reputation"
+          today={{ value: brandCurrent.score, caption: brandCurrent.label }}
+          ivr={{ value: brandRecommended.score, caption: brandRecommended.label }}
+          voice={{ value: brandVoice.score, caption: brandVoice.label }}
+          delta={{ value: `+${brandDelta} pts`, tone: 'good' }}
+          emphasis
+          formula={brandFormula}
+        />
+      </div>
+
+      {/* Secondary row — structural metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <KpiTile
+          icon={<Layers size={14} />}
+          label="Menu Levels"
+          today={{ value: current.maxDepth, caption: 'levels deep' }}
+          ivr={{ value: recommended.maxDepth, caption: 'flat menu' }}
+          voice={{ value: voiceAgent.maxDepth, caption: 'no menu' }}
+          delta={{
+            value: `−${current.maxDepth - voiceAgent.maxDepth}`,
+            tone: 'good',
+          }}
+        />
+        <KpiTile
+          icon={<Globe size={14} />}
+          label="Web Redirects"
+          today={{ value: webRefs.length, caption: 'links spoken' }}
+          ivr={{ value: 0, caption: 'no offload' }}
+          voice={{ value: 0, caption: 'no offload' }}
+          delta={{
+            value: webRefs.length > 0 ? `−${webRefs.length}` : '—',
+            tone: webRefs.length > 0 ? 'good' : 'neutral',
+          }}
+          refs={webRefs}
+        />
+        <KpiTile
+          icon={<Phone size={14} />}
+          label="Phone Transfers"
+          today={{ value: phoneRefs.length, caption: 'numbers given' }}
+          ivr={{ value: 0, caption: 'no offload' }}
+          voice={{ value: 0, caption: 'no offload' }}
+          delta={{
+            value: phoneRefs.length > 0 ? `−${phoneRefs.length}` : '—',
+            tone: phoneRefs.length > 0 ? 'good' : 'neutral',
+          }}
+          refs={phoneRefs}
+        />
+      </div>
     </div>
   );
 }
