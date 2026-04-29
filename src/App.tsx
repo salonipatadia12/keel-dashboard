@@ -38,6 +38,20 @@ export default function App() {
     );
     const hasOpZero = sysCharForUni.some((s) => s.has_operator_zero === true);
 
+    // businessHoursOnly: any human-reachable path that the IVR explicitly
+    // gates behind business hours (M-F + AM/PM markers in the row's
+    // business_hours field). When true, the IVR has no 24/7 escalation.
+    const humanRows = data.overview.filter(
+      (o) =>
+        o.university === universityName &&
+        o.outcome_type === 'human' &&
+        typeof o.business_hours === 'string' &&
+        o.business_hours.length > 0
+    );
+    const businessHoursOnly = humanRows.some((o) =>
+      /monday|m-f|am|pm/i.test(String(o.business_hours))
+    );
+
     // Prefer the WorkflowC scorer's output (production-grade, in
     // data.frictionScore). Fall back to the in-browser scorer if that sheet
     // hasn't been populated yet.
@@ -46,9 +60,9 @@ export default function App() {
     );
     const currentFriction = sheetRow
       ? frictionFromSheet(sheetRow)
-      : calculateFriction(built.root, { hasOpZero });
+      : calculateFriction(built.root, { hasOpZero, businessHoursOnly });
 
-    const recommended = buildRecommendedTree();
+    const recommended = buildRecommendedTree(built.root, currentFriction);
 
     const webRefs = built.allNodes.flatMap((n) => n.urls);
     const phoneRefs = built.allNodes.flatMap((n) => n.phones);
