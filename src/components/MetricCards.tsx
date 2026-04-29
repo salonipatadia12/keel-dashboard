@@ -1,7 +1,8 @@
 import KpiTile from './KpiTile';
 import type { FrictionResult, Reference } from '../lib/types';
 import type { BrandIndex } from '../lib/brand';
-import { Activity, Layers, Globe, Phone, Sparkles } from './Icons';
+import { TYPICAL_STUDENT_QUESTIONS } from '../lib/friction';
+import { Activity, Layers, Globe, Phone, Sparkles, HelpCircle } from './Icons';
 
 interface Props {
   current: FrictionResult;
@@ -13,6 +14,7 @@ interface Props {
   brandRecommended: BrandIndex;
   brandVoice: BrandIndex;
   brandFormula: string;
+  todayQuestionsCovered: number;
 }
 
 export default function MetricCards({
@@ -25,12 +27,23 @@ export default function MetricCards({
   brandRecommended,
   brandVoice,
   brandFormula,
+  todayQuestionsCovered,
 }: Props) {
+  const Q = TYPICAL_STUDENT_QUESTIONS.length;
+  const ivrCovered = Math.round(recommended.selfServiceCoverage * Q);
+  const voiceCovered = Math.round(voiceAgent.selfServiceCoverage * Q);
+
   const frictionDelta = current.totalScore - voiceAgent.totalScore;
   const brandDelta = brandVoice.score - brandCurrent.score;
+  const coverageDelta = voiceCovered - todayQuestionsCovered;
+
+  const coverageFormula =
+    `Coverage = student questions answered without a human / ${Q} typical questions tracked\n\n` +
+    'Tracked questions:\n' +
+    TYPICAL_STUDENT_QUESTIONS.map((q, i) => `  ${i + 1}. ${q}`).join('\n');
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
       <KpiTile
         icon={<Activity size={14} />}
         label="Friction Score"
@@ -39,6 +52,28 @@ export default function MetricCards({
         voice={{ value: voiceAgent.totalScore, caption: voiceAgent.grade }}
         delta={{ value: `−${frictionDelta} pts`, tone: 'good' }}
         emphasis
+      />
+      <KpiTile
+        icon={<HelpCircle size={14} />}
+        label="Question Coverage"
+        today={{
+          value: `${todayQuestionsCovered} / ${Q}`,
+          caption:
+            todayQuestionsCovered === 0
+              ? 'all routed to human'
+              : `${Q - todayQuestionsCovered} still need a human`,
+        }}
+        ivr={{
+          value: `${ivrCovered} / ${Q}`,
+          caption: 'FAQ leaf handles basics',
+        }}
+        voice={{
+          value: `${voiceCovered} / ${Q}`,
+          caption: 'self-resolved end-to-end',
+        }}
+        delta={{ value: `+${coverageDelta} answered`, tone: 'good' }}
+        emphasis
+        formula={coverageFormula}
       />
       <KpiTile
         icon={<Layers size={14} />}

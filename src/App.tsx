@@ -2,7 +2,11 @@ import { useMemo } from 'react';
 import raw from './data.json';
 import type { RawData } from './lib/types';
 import { buildPathTree } from './lib/pathTree';
-import { calculateFriction, frictionFromSheet } from './lib/friction';
+import {
+  calculateFriction,
+  frictionFromSheet,
+  TYPICAL_STUDENT_QUESTIONS,
+} from './lib/friction';
 import { buildRecommendedTree, buildVoiceAgentTree } from './lib/recommend';
 import { brandNarrative, brandReputationIndex } from './lib/brand';
 import TopBar from './components/TopBar';
@@ -52,15 +56,32 @@ export default function App() {
       /monday|m-f|am|pm/i.test(String(o.business_hours))
     );
 
-    // Prefer the WorkflowC scorer's output (production-grade, in
-    // data.frictionScore). Fall back to the in-browser scorer if that sheet
-    // hasn't been populated yet.
+    // self-service coverage of the existing IVR: each `info`-type leaf is
+    // assumed to cover ~3 of the typical student questions (FAQ-style
+    // pages tend to bundle hours, locations, and one or two procedural
+    // answers together). Routing-to-human leaves don't count — the
+    // question wasn't answered, just queued.
+    const infoLeafCount = built.allNodes.filter(
+      (n) => n.outcomeType === 'info' && n.children.length === 0
+    ).length;
+    const todayQuestionsCovered = Math.min(
+      TYPICAL_STUDENT_QUESTIONS.length,
+      infoLeafCount * 3
+    );
+    const todayCoverage = todayQuestionsCovered / TYPICAL_STUDENT_QUESTIONS.length;
+
+    // Prefer the friction-scorer row from the sheet. Fall back to the
+    // in-browser scorer if that sheet hasn't been populated yet.
     const sheetRow = data.frictionScore.find(
       (r) => r.university === universityName
     );
     const currentFriction = sheetRow
       ? frictionFromSheet(sheetRow)
-      : calculateFriction(built.root, { hasOpZero, businessHoursOnly });
+      : calculateFriction(built.root, {
+          hasOpZero,
+          businessHoursOnly,
+          selfServiceCoverage: todayCoverage,
+        });
 
     const recommended = buildRecommendedTree(built.root, currentFriction);
     const voiceAgent = buildVoiceAgentTree(built.root, currentFriction);
@@ -85,6 +106,7 @@ export default function App() {
       brandRecommended,
       brandVoice,
       sheetRow,
+      todayQuestionsCovered,
     };
   }, []);
 
@@ -101,6 +123,7 @@ export default function App() {
     brandRecommended,
     brandVoice,
     sheetRow,
+    todayQuestionsCovered,
   } = view;
 
   const shortName = universityName.split(',')[0];
@@ -175,6 +198,7 @@ export default function App() {
             brandRecommended={brandRecommended}
             brandVoice={brandVoice}
             brandFormula={brandFormula}
+            todayQuestionsCovered={todayQuestionsCovered}
           />
         </div>
 
