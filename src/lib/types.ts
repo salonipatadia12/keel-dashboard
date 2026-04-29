@@ -78,6 +78,12 @@ export interface FrictionScoreRow {
   agent_access_score: number;
   clarity_score: number;
   operator_score: number;
+  // Optional — present when the row was written by the new self-service-
+  // aware scorer. Older rows omit it.
+  self_service_score?: number;
+  // Optional — count of typical student questions answered without a human.
+  questions_covered?: number;
+  questions_total?: number;
   max_depth: number;
   avg_options: number;
   total_nodes: number;
@@ -135,6 +141,7 @@ export interface FrictionComponents {
   agent_access: number;
   clarity: number;
   operator: number;
+  self_service: number;
 }
 
 export interface FrictionResult {
@@ -148,4 +155,7 @@ export interface FrictionResult {
   voicemailCount: number;
   humanReachableCount: number;
   hasOpZero: boolean;
+  // Coverage as 0..1 fraction of typical student questions answered without
+  // a human. Surfaced as a KPI tile and as a friction component.
+  selfServiceCoverage: number;
 }

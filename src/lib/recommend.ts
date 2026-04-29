@@ -189,8 +189,14 @@ export function buildRecommendedTree(
 
   addRepeatNodes(root);
 
-  // Keel is 24/7 — businessHoursOnly is always false for the projection.
-  const friction = calculateFriction(root, { hasOpZero: true, businessHoursOnly: false });
+  // Keel is 24/7. Coverage: a flat IVR with one FAQ leaf can self-serve
+  // ~3 of the 12 typical student questions (hours + a couple procedural
+  // answers); everything else still requires a human.
+  const friction = calculateFriction(root, {
+    hasOpZero: true,
+    businessHoursOnly: false,
+    selfServiceCoverage: 3 / 12,
+  });
 
   const warnings: string[] = [];
   if (currentFriction && friction.totalScore >= currentFriction.totalScore) {
@@ -247,7 +253,14 @@ export function buildVoiceAgentTree(
   root.children = [agent];
   addRepeatNodes(root);
 
-  const friction = calculateFriction(root, { hasOpZero: true, businessHoursOnly: false });
+  // Voice agent self-resolves ~10 of the 12 typical student questions;
+  // GPA / academic standing and advisor-specific routing typically still
+  // hand off (identity verification, judgment calls).
+  const friction = calculateFriction(root, {
+    hasOpZero: true,
+    businessHoursOnly: false,
+    selfServiceCoverage: 10 / 12,
+  });
 
   const warnings: string[] = [];
   if (currentFriction && friction.totalScore >= currentFriction.totalScore) {

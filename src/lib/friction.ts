@@ -8,15 +8,39 @@ export interface FrictionInputs {
   // hours (e.g., M-F 8a-5p) and the IVR has no 24/7 escalation. Drives the
   // operator-availability penalty.
   businessHoursOnly: boolean;
+  // Fraction (0-1) of the typical-student-questions list this IVR answers
+  // WITHOUT requiring a human. CSU's existing IVR routes every question to
+  // a human → 0. A flat IVR with one FAQ leaf might cover ~25%. A full
+  // voice agent handles ~80%+. This is the heaviest single signal in the
+  // model — caller pain is dominated by "I had to wait on hold to get an
+  // answer the IVR could have given me."
+  selfServiceCoverage: number;
 }
+
+// Canonical list of common student-side questions used to compute self-service
+// coverage. Tuned for university-IVR audits; size is the denominator on the
+// "Question Coverage" KPI tile in the dashboard.
+export const TYPICAL_STUDENT_QUESTIONS = [
+  'Admission deadlines and requirements',
+  'Application status',
+  'Financial aid / FAFSA status',
+  'Tuition balance and billing',
+  'Course registration',
+  'Class schedule and catalog',
+  'Transcript requests',
+  'Account / password help',
+  'Office hours and locations',
+  'Add / drop classes',
+  'GPA and academic standing',
+  'Advisor and department contact info',
+] as const;
 
 // Convert a row from the Friction Score sheet (WorkflowC output) into the
 // FrictionResult shape the dashboard consumes. WorkflowC is the production
 // scorer — we trust its numbers when the row exists.
 export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
-  // Apply the same friction floor used in calculateFriction — no system
-  // has true zero friction.
-  const score = Math.max(5, Math.round(row.total_score));
+  // Apply the same floor used in calculateFriction.
+  const score = Math.max(10, Math.round(row.total_score));
   let grade: FrictionResult['grade'];
   if (typeof row.grade === 'string' && ['Excellent', 'Good', 'Fair', 'Poor'].includes(row.grade)) {
     grade = row.grade as FrictionResult['grade'];
@@ -24,6 +48,11 @@ export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
   else if (score <= 35) grade = 'Good';
   else if (score <= 65) grade = 'Fair';
   else grade = 'Poor';
+
+  const coverage =
+    row.questions_covered != null && row.questions_total
+      ? row.questions_covered / row.questions_total
+      : 0;
 
   return {
     totalScore: score,
@@ -36,6 +65,7 @@ export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
       agent_access: row.agent_access_score,
       clarity: row.clarity_score,
       operator: row.operator_score,
+      self_service: row.self_service_score ?? 0,
     },
     maxDepth: row.max_depth,
     avgOptions: Math.round(row.avg_options * 10) / 10,
@@ -44,30 +74,34 @@ export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
     voicemailCount: row.voicemail_count ?? 0,
     humanReachableCount: row.human_reachable_count,
     hasOpZero: row.operator_score === 0,
+    selfServiceCoverage: coverage,
   };
 }
 
 // Caller-experience friction model.
 //
-// Caller pain is dominated by *time spent on the call*, not by menu structure.
-// A 2-press IVR that takes 3 minutes to reach a human is a worse experience
-// than a 4-press IVR that takes 30 seconds. So `time` (avg call duration),
-// `clarity` (longest menu-prompt duration), and `operator` (24/7 vs business
-// hours) carry the bulk of the weight.
+// Two big drivers:
+//   1. How long does the call take? (time / clarity / operator)
+//   2. Could the IVR have answered without a human? (self_service)
 //
-// Calibration target: a "best realistic" Keel deployment lands the projected
-// score in the 10–15 band — flat depth-1 menu, every department preserved as
-// a 1-press leaf, 24/7 operator zero, self-service info path, ~8s avg call
-// time. The current/today score is whatever the SAME model computes for the
-// scraped IVR; it isn't pinned to a specific number.
+// The single biggest pain point in the existing CSU IVR — and most
+// university IVRs — is that callers wait several minutes on hold for
+// answers the IVR could have given them in 5 seconds. So self_service
+// (% of typical student questions covered without a human) is the
+// heaviest individual weight.
 //
-//   time          30%  avg call duration to resolution
-//   operator      25%  business-hours dependency (no 24/7 = stranded callers)
-//   clarity       20%  longest menu prompt the caller had to sit through
-//   options       12%  cognitive load from menu breadth (drives the 10–15 floor)
-//   depth          8%  cognitive load from menu nesting
-//   dead_end       3%  share of paths that go nowhere
-//   agent_access   2%  ease of reaching a human (op-zero + low ratio = good)
+// Calibration target: voice-agent projection lands at ~10 (top of the
+// Excellent band, not zero — no real system has zero friction). Optimized
+// digit-menu IVR lands ~25-30 (Good). Today's CSU IVR lands ~78 (Poor).
+//
+//   self_service  25%  questions answered without a human
+//   time          22%  avg call duration to resolution
+//   operator      18%  business-hours dependency
+//   clarity       15%  longest menu prompt the caller had to sit through
+//   options        8%  cognitive load from menu breadth
+//   depth          5%  cognitive load from menu nesting
+//   dead_end       4%  share of paths that go nowhere
+//   agent_access   3%  ease of reaching a human
 export function calculateFriction(
   root: TreeNode,
   inputs: FrictionInputs
@@ -147,6 +181,11 @@ export function calculateFriction(
   if (inputs.hasOpZero) agentAccessScore -= 20;
   agentAccessScore = clamp(agentAccessScore);
 
+  // self_service_score: 0% coverage → 100 friction; 100% coverage → 0 friction.
+  const selfServiceScore = clamp(
+    (1 - clamp(inputs.selfServiceCoverage, 0, 1)) * 100
+  );
+
   const components = {
     depth: depthScore,
     options: optionsScore,
@@ -155,21 +194,24 @@ export function calculateFriction(
     agent_access: agentAccessScore,
     clarity: clarityScore,
     operator: operatorScore,
+    self_service: selfServiceScore,
   };
 
   const total =
-    timeScore * 0.3 +
-    operatorScore * 0.25 +
-    clarityScore * 0.2 +
-    optionsScore * 0.12 +
-    depthScore * 0.08 +
-    deadEndScore * 0.03 +
-    agentAccessScore * 0.02;
-  // Friction floor of 5: no real-world phone system has zero friction. There's
-  // always greeting time, intent capture, slight latency, occasional
-  // mis-recognition, etc. The floor stops the model from claiming a "perfect"
-  // score for any deployment, including the voice-agent projection.
-  const totalScore = Math.max(5, Math.round(total));
+    selfServiceScore * 0.25 +
+    timeScore * 0.22 +
+    operatorScore * 0.18 +
+    clarityScore * 0.15 +
+    optionsScore * 0.08 +
+    depthScore * 0.05 +
+    deadEndScore * 0.04 +
+    agentAccessScore * 0.03;
+  // Friction floor of 10: no real-world phone system has zero friction. Even
+  // an ideal voice agent has greeting time, intent capture, occasional
+  // mis-recognition, latency, and ~20% of inquiries that legitimately need
+  // a human. The floor lands the voice-agent projection at the top of the
+  // [10, 15] target band.
+  const totalScore = Math.max(10, Math.round(total));
 
   let grade: FrictionResult['grade'];
   if (totalScore <= 15) grade = 'Excellent';
@@ -188,5 +230,6 @@ export function calculateFriction(
     voicemailCount: voicemails,
     humanReachableCount: humanCount,
     hasOpZero: inputs.hasOpZero,
+    selfServiceCoverage: clamp(inputs.selfServiceCoverage, 0, 1),
   };
 }
