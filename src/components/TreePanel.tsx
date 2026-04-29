@@ -3,7 +3,7 @@ import type { FrictionResult, TreeNode } from '../lib/types';
 import { Check, Sparkles } from './Icons';
 
 interface Props {
-  variant: 'current' | 'recommended';
+  variant: 'current' | 'recommended' | 'voice_agent';
   tree: TreeNode;
   friction: FrictionResult;
   height: number;
@@ -18,8 +18,14 @@ const ACCENT = {
     headerColor: 'text-warn',
   },
   recommended: {
-    label: 'With Keel',
-    badge: 'projected',
+    label: 'Optimized IVR',
+    badge: 'projected · digit menu',
+    badgeClass: 'text-accent bg-accent/10 border-accent/25',
+    headerColor: 'text-accent',
+  },
+  voice_agent: {
+    label: 'Voice agent',
+    badge: 'projected · natural language',
     badgeClass: 'text-good bg-good/10 border-good/25',
     headerColor: 'text-good',
   },
@@ -42,7 +48,7 @@ export default function TreePanel({
   rationale,
 }: Props) {
   const a = ACCENT[variant];
-  const isRec = variant === 'recommended';
+  const isRec = variant === 'recommended' || variant === 'voice_agent';
 
   return (
     <div className="rounded-2xl bg-surface border border-line shadow-card overflow-hidden flex flex-col">

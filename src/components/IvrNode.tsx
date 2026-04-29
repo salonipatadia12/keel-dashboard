@@ -107,6 +107,11 @@ export default function IvrNode({ data }: { data: IvrNodeData }) {
         <div className="text-[12.5px] leading-snug font-semibold text-ink line-clamp-2 mb-1.5">
           {n.label}
         </div>
+        {n.notes && n.isRecommended && (
+          <div className="text-[10px] leading-snug text-muted mb-1.5 line-clamp-3">
+            {n.notes}
+          </div>
+        )}
         {(hasUrl || hasPhone || n.durationSec) && (
           <div className="flex items-center gap-3 text-[10.5px] text-muted">
             {hasUrl && (

@@ -4,14 +4,16 @@ interface Props {
   university: string;
   currentScore: number;
   recommendedScore: number;
+  voiceAgentScore: number;
 }
 
 export default function Pitch({
   university,
   currentScore,
   recommendedScore,
+  voiceAgentScore,
 }: Props) {
-  const drop = currentScore - recommendedScore;
+  const drop = currentScore - voiceAgentScore;
   return (
     <section className="rounded-2xl bg-surface border border-line shadow-card overflow-hidden relative">
       <div className="absolute top-0 left-1/4 w-72 h-72 bg-accent/8 rounded-full blur-3xl pointer-events-none" />
@@ -30,13 +32,21 @@ export default function Pitch({
           <span className="bg-bad/10 text-bad border border-bad/30 px-2 py-0.5 rounded-md font-semibold">
             {currentScore}-point friction wall
           </span>{' '}
-          today. Keel replaces the menu tree with a voice agent that drops
-          friction by{' '}
-          <span className="bg-good/10 text-good border border-good/30 px-2 py-0.5 rounded-md font-semibold">
-            {drop} points
+          today. An optimized IVR alone takes that to{' '}
+          <span className="bg-accent/10 text-accent border border-accent/30 px-2 py-0.5 rounded-md font-semibold">
+            {recommendedScore}
           </span>
-          , erases every dead end, and gets every caller to the right person
-          (or the right answer) in two key presses or fewer.
+          ; the full Keel voice agent — natural language, 24/7, multilingual,
+          self-service for ~60% of inquiries — drops it to{' '}
+          <span className="bg-good/10 text-good border border-good/30 px-2 py-0.5 rounded-md font-semibold">
+            {voiceAgentScore}
+          </span>
+          . That's{' '}
+          <span className="bg-good/10 text-good border border-good/30 px-2 py-0.5 rounded-md font-semibold">
+            −{drop} points
+          </span>{' '}
+          of friction removed and every caller — evening, weekend, or
+          non-English — reaching the right answer in under 10 seconds.
         </p>
       </div>
     </section>
