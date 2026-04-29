@@ -14,7 +14,9 @@ export interface FrictionInputs {
 // FrictionResult shape the dashboard consumes. WorkflowC is the production
 // scorer — we trust its numbers when the row exists.
 export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
-  const score = Math.round(row.total_score);
+  // Apply the same friction floor used in calculateFriction — no system
+  // has true zero friction.
+  const score = Math.max(5, Math.round(row.total_score));
   let grade: FrictionResult['grade'];
   if (typeof row.grade === 'string' && ['Excellent', 'Good', 'Fair', 'Poor'].includes(row.grade)) {
     grade = row.grade as FrictionResult['grade'];
@@ -163,7 +165,11 @@ export function calculateFriction(
     depthScore * 0.08 +
     deadEndScore * 0.03 +
     agentAccessScore * 0.02;
-  const totalScore = Math.round(total);
+  // Friction floor of 5: no real-world phone system has zero friction. There's
+  // always greeting time, intent capture, slight latency, occasional
+  // mis-recognition, etc. The floor stops the model from claiming a "perfect"
+  // score for any deployment, including the voice-agent projection.
+  const totalScore = Math.max(5, Math.round(total));
 
   let grade: FrictionResult['grade'];
   if (totalScore <= 15) grade = 'Excellent';

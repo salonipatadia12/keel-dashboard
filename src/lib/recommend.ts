@@ -208,64 +208,43 @@ export function buildRecommendedTree(
 }
 
 // ----------------------------------------------------------------------------
-// Voice-agent tier — what callers experience when Keel runs as a full
-// agentic voice agent instead of a digit menu.
-//
-// Three high-level capability buckets at depth 1, all natural-language driven:
-//   • Self-service auto-resolution — Keel resolves common queries without
-//     handing off to a human. Hours, status checks, billing, account help,
-//     FAQs, multilingual.
-//   • Smart routing with context — Keel collects intent + caller context
-//     first, then transfers with a summary so the human picks up at speed.
-//   • 24/7 human escalation — direct to operator anytime, including
-//     after-hours and emergencies.
+// Voice-agent tier — Keel runs as a single conversational agent instead of a
+// digit menu. There is no separate "operator" node, no separate "self-service"
+// vs "smart routing" bucket: the voice agent IS all of those. From the
+// caller's perspective it's one entity that picks up, understands, and
+// resolves the request — a really good human-like assistant available 24/7.
 // ----------------------------------------------------------------------------
 
 const VA_RATIONALE = [
-  'Keel handles ~60% of common inquiries WITHOUT a human — hours, status checks, billing, account help, FAQs.',
-  'Smart routing: Keel collects intent + caller identity first, hands the agent a summary so the human picks up at speed.',
-  '24/7 multilingual coverage. Evening, weekend, and non-English callers are no longer locked out.',
-  "No menu. Callers state their intent in plain English; Keel doesn't make them memorize 'press 1 for X'.",
-  'Context-aware: caller phone number → student record lookup → personalized response. No re-asking who they are.',
+  'A single agent handles the whole call — info, routing, escalation. There is no separate "operator" because Keel is the operator.',
+  'Resolves ~80% of common inquiries end-to-end without handing off — hours, status checks, billing, account help, FAQs.',
+  'When a human is needed, Keel collects intent + caller identity first and hands the agent a summary, so the human picks up at speed.',
+  '24/7 and multilingual. Evening, weekend, and non-English callers are no longer locked out.',
+  "No menu, no digits to memorize. Callers state their intent in plain English the way they'd ask a person.",
 ];
 
 export function buildVoiceAgentTree(
-  currentTree?: TreeNode | null,
+  _currentTree?: TreeNode | null,
   currentFriction?: FrictionResult | null
 ): RecommendResult {
   nodeCounter = 0;
   const root = makeRoot();
-  // Shorter root duration — Keel greets in ~3s, not 5s
-  root.durationSec = 3;
+  root.durationSec = 3; // Greeting only — "Hi, this is the Sac State assistant."
   root.label = 'Voice agent (speak naturally)';
 
-  // 1: Self-service — Keel resolves without a human (info type)
-  const selfServe = makeNode(
+  // ONE leaf: the voice agent itself. Acts like a human-quality info giver
+  // available around the clock. Average resolution ~8s after greeting.
+  const agent = makeNode(
     '1',
-    'Self-service (instant)',
-    'info',
-    1,
-    5
-  );
-  selfServe.notes =
-    'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25+ languages';
-
-  // 2: Smart routing — Keel handles intake, transfers with context (human)
-  const smartRoute = makeNode(
-    '2',
-    'Smart routing with context',
+    'Voice agent — natural language, 24/7',
     'human',
     1,
-    12
+    8
   );
-  smartRoute.notes =
-    'Admissions · Financial aid · Bursar · Registrar · Academic advising — handed off with intent + identity prefilled';
+  agent.notes =
+    'Resolves end-to-end: hours · status · billing · account · FAQs · routing with context · multilingual · ~80% of calls handled without escalation.';
 
-  // 0: 24/7 human escalation
-  const operator = makeNode('0', 'Operator (24/7)', 'human', 1, 8);
-  operator.notes = '"Speak to a person" anytime · emergencies · after-hours coverage';
-
-  root.children = [selfServe, smartRoute, operator];
+  root.children = [agent];
   addRepeatNodes(root);
 
   const friction = calculateFriction(root, { hasOpZero: true, businessHoursOnly: false });
