@@ -84,7 +84,7 @@ export default function IvrNode({ data }: { data: IvrNodeData }) {
 
   return (
     <div
-      className={`bg-surface rounded-xl border ${s.border} shadow-card w-[248px] overflow-hidden font-sans`}
+      className={`bg-surface rounded-xl border ${s.border} shadow-card w-[196px] overflow-hidden font-sans`}
     >
       <Handle
         type="target"
@@ -92,19 +92,19 @@ export default function IvrNode({ data }: { data: IvrNodeData }) {
         className="!bg-line2 !w-2 !h-2 !border-0 !-translate-y-1/2"
       />
       <div className={`h-1 w-full ${s.accent}`} />
-      <div className="px-3.5 py-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="font-mono text-[11px] tracking-wider text-muted2 font-semibold">
+      <div className="px-3 py-2.5">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="font-mono text-[10.5px] tracking-wider text-muted2 font-semibold">
             {isRoot ? 'ROOT' : n.digit ? `▸ ${n.digit}` : ' '}
           </span>
           <span
-            className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md ${s.chipBg} ${s.chipText} font-bold flex items-center gap-1`}
+            className={`text-[9.5px] uppercase tracking-wider px-1.5 py-0.5 rounded ${s.chipBg} ${s.chipText} font-bold flex items-center gap-1`}
           >
-            <Icon size={10} />
+            <Icon size={9} />
             {s.tag}
           </span>
         </div>
-        <div className="text-[13.5px] leading-snug font-semibold text-ink line-clamp-2 mb-2">
+        <div className="text-[12.5px] leading-snug font-semibold text-ink line-clamp-2 mb-1.5">
           {n.label}
         </div>
         {(hasUrl || hasPhone || n.durationSec) && (

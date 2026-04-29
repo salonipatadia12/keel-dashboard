@@ -12,18 +12,19 @@ import '@xyflow/react/dist/style.css';
 import IvrNode from './IvrNode';
 import type { TreeNode } from '../lib/types';
 
-const NODE_W = 248;
-const NODE_H = 108;
+const NODE_W = 196;
+const NODE_H = 96;
 
 function layout(root: TreeNode): { nodes: Node[]; edges: Edge[] } {
   const g = new dagre.graphlib.Graph({ multigraph: false });
   g.setDefaultEdgeLabel(() => ({}));
   g.setGraph({
     rankdir: 'TB',
-    nodesep: 28,
-    ranksep: 76,
+    nodesep: 14,
+    ranksep: 88,
     marginx: 32,
     marginy: 32,
+    ranker: 'tight-tree',
   });
 
   const nodes: Node[] = [];
