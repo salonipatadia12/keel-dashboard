@@ -1,4 +1,4 @@
-export type OutcomeType = 'human' | 'voicemail' | 'dead_end' | 'info' | 'submenu' | 'repeat';
+export type OutcomeType = 'human' | 'voicemail' | 'dead_end' | 'info' | 'submenu' | 'repeat' | 'ai';
 
 export interface OverviewRow {
   callId: string | null;
@@ -154,6 +154,9 @@ export interface FrictionResult {
   deadEndCount: number;
   voicemailCount: number;
   humanReachableCount: number;
+  // Number of leaves of type 'ai' — a Keel-style voice agent that gives
+  // a real answer. Counts toward "reachable responders" alongside humans.
+  aiReachableCount: number;
   hasOpZero: boolean;
   // Coverage as 0..1 fraction of typical student questions answered without
   // a human. Surfaced as a KPI tile and as a friction component.

@@ -17,14 +17,20 @@ const PERCEPTION_BAD = ['Bureaucratic', 'Hard to reach', 'Indifferent'];
 const PERCEPTION_GOOD = ['Modern', 'Responsive', 'Caller-first'];
 
 export function brandReputationIndex(friction: FrictionResult): BrandIndex {
-  const humanRatioPct = Math.round(
-    (friction.humanReachableCount / Math.max(friction.totalNodes, 1)) * 100
+  // Humans AND AI agents both count as "the brand actually responded".
+  // A voice agent answering in 8 seconds is not a worse outcome than a
+  // human answering in 8 seconds — for brand perception it's better
+  // (no hold time, 24/7).
+  const responderRatioPct = Math.round(
+    ((friction.humanReachableCount + friction.aiReachableCount) /
+      Math.max(friction.totalNodes, 1)) *
+      100
   );
   const frictionInverse = Math.max(0, 100 - friction.totalScore);
   const clarityInverse = Math.max(0, 100 - friction.components.clarity);
 
   const score = Math.round(
-    0.5 * frictionInverse + 0.3 * humanRatioPct + 0.2 * clarityInverse
+    0.5 * frictionInverse + 0.3 * responderRatioPct + 0.2 * clarityInverse
   );
 
   let label: BrandIndex['label'];
@@ -36,10 +42,10 @@ export function brandReputationIndex(friction: FrictionResult): BrandIndex {
   const perception = score >= 60 ? PERCEPTION_GOOD : PERCEPTION_BAD;
 
   const formula =
-    `BRI = 50% × (100 − friction)\n     + 30% × human-reachability%\n     + 20% × (100 − clarity)\n` +
+    `BRI = 50% × (100 − friction)\n     + 30% × responder-reachability%\n     + 20% × (100 − clarity)\n` +
     `\n` +
     `    = 50% × ${frictionInverse}\n` +
-    `    + 30% × ${humanRatioPct}\n` +
+    `    + 30% × ${responderRatioPct}\n` +
     `    + 20% × ${clarityInverse}\n` +
     `    = ${score} / 100`;
 
@@ -49,7 +55,7 @@ export function brandReputationIndex(friction: FrictionResult): BrandIndex {
     perception,
     breakdown: {
       frictionInverse,
-      humanRatio: humanRatioPct,
+      humanRatio: responderRatioPct,
       clarityInverse,
       formula,
     },

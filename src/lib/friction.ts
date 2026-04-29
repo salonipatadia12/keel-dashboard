@@ -73,6 +73,7 @@ export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
     deadEndCount: row.dead_end_count,
     voicemailCount: row.voicemail_count ?? 0,
     humanReachableCount: row.human_reachable_count,
+    aiReachableCount: 0,
     hasOpZero: row.operator_score === 0,
     selfServiceCoverage: coverage,
   };
@@ -132,7 +133,10 @@ export function calculateFriction(
   const deadEnds = all.filter((n) => n.outcomeType === 'dead_end').length;
   const voicemails = all.filter((n) => n.outcomeType === 'voicemail').length;
   const humanCount = all.filter((n) => n.outcomeType === 'human').length;
-  const humanRatio = humanCount / totalNodes;
+  const aiCount = all.filter((n) => n.outcomeType === 'ai').length;
+  // Caller can reach a real responder (human OR AI agent). Both count for
+  // accessibility — the AI gives a real answer, not a recording.
+  const reachableRatio = (humanCount + aiCount) / totalNodes;
 
   // Duration analysis — the part this model is built around.
   const durations = all
@@ -174,10 +178,10 @@ export function calculateFriction(
   // dead_end_score: dead ends + voicemails as % of nodes.
   const deadEndScore = clamp(((deadEnds + voicemails * 0.5) / totalNodes) * 100);
 
-  // agent_access_score: low when callers can reach a human easily (op-zero +
-  // most paths route to one). High when humans are hidden behind menus or
-  // unreachable.
-  let agentAccessScore = 100 - humanRatio * 100;
+  // agent_access_score: low when callers can reach an actual responder
+  // easily (a human OR an AI agent that gives a real answer). High when
+  // responders are hidden behind menus or unreachable.
+  let agentAccessScore = 100 - reachableRatio * 100;
   if (inputs.hasOpZero) agentAccessScore -= 20;
   agentAccessScore = clamp(agentAccessScore);
 
@@ -229,6 +233,7 @@ export function calculateFriction(
     deadEndCount: deadEnds,
     voicemailCount: voicemails,
     humanReachableCount: humanCount,
+    aiReachableCount: aiCount,
     hasOpZero: inputs.hasOpZero,
     selfServiceCoverage: clamp(inputs.selfServiceCoverage, 0, 1),
   };

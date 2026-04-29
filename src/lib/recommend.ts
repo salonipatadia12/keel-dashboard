@@ -238,24 +238,40 @@ export function buildVoiceAgentTree(
   root.durationSec = 3; // Greeting only — "Hi, this is the Sac State assistant."
   root.label = 'Voice agent (speak naturally)';
 
-  // ONE leaf: the voice agent itself. Acts like a human-quality info giver
-  // available around the clock. Average resolution ~8s after greeting.
-  const agent = makeNode(
+  // Two leaves, capturing the two paths a Keel call can take.
+  //
+  // 1) AI-handled — for the ~10 of 12 typical student questions the voice
+  //    agent can answer end-to-end without involving a human. Type 'ai'
+  //    (not 'info', not 'human') because semantically it's an AI giving
+  //    a real answer, not a generic recording or a person.
+  const aiAnswer = makeNode(
     '1',
-    'Voice agent — natural language, 24/7',
-    'human',
+    'Voice agent answers (AI)',
+    'ai',
     1,
     8
   );
-  agent.notes =
-    'Resolves end-to-end: hours · status · billing · account · FAQs · routing with context · multilingual · ~80% of calls handled without escalation.';
+  aiAnswer.notes =
+    'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25+ languages · ~80% of calls resolved without escalation.';
 
-  root.children = [agent];
+  // 2) Routed to a human — when the AI hits something it shouldn't decide
+  //    (academic standing, advisor specifics, complex disputes). Keel
+  //    transfers with intent + caller context already in hand so the human
+  //    picks up at speed.
+  const humanRoute = makeNode(
+    '2',
+    'Routed to human (when needed)',
+    'human',
+    1,
+    12
+  );
+  humanRoute.notes =
+    'Complex cases · Specific advisor requests · Emergencies. Keel hands off with intent + caller identity prefilled.';
+
+  root.children = [aiAnswer, humanRoute];
   addRepeatNodes(root);
 
-  // Voice agent self-resolves ~10 of the 12 typical student questions;
-  // GPA / academic standing and advisor-specific routing typically still
-  // hand off (identity verification, judgment calls).
+  // Voice agent self-resolves ~10 of the 12 typical student questions.
   const friction = calculateFriction(root, {
     hasOpZero: true,
     businessHoursOnly: false,
