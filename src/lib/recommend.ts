@@ -206,3 +206,81 @@ export function buildRecommendedTree(
     warnings,
   };
 }
+
+// ----------------------------------------------------------------------------
+// Voice-agent tier — what callers experience when Keel runs as a full
+// agentic voice agent instead of a digit menu.
+//
+// Three high-level capability buckets at depth 1, all natural-language driven:
+//   • Self-service auto-resolution — Keel resolves common queries without
+//     handing off to a human. Hours, status checks, billing, account help,
+//     FAQs, multilingual.
+//   • Smart routing with context — Keel collects intent + caller context
+//     first, then transfers with a summary so the human picks up at speed.
+//   • 24/7 human escalation — direct to operator anytime, including
+//     after-hours and emergencies.
+// ----------------------------------------------------------------------------
+
+const VA_RATIONALE = [
+  'Keel handles ~60% of common inquiries WITHOUT a human — hours, status checks, billing, account help, FAQs.',
+  'Smart routing: Keel collects intent + caller identity first, hands the agent a summary so the human picks up at speed.',
+  '24/7 multilingual coverage. Evening, weekend, and non-English callers are no longer locked out.',
+  "No menu. Callers state their intent in plain English; Keel doesn't make them memorize 'press 1 for X'.",
+  'Context-aware: caller phone number → student record lookup → personalized response. No re-asking who they are.',
+];
+
+export function buildVoiceAgentTree(
+  currentTree?: TreeNode | null,
+  currentFriction?: FrictionResult | null
+): RecommendResult {
+  nodeCounter = 0;
+  const root = makeRoot();
+  // Shorter root duration — Keel greets in ~3s, not 5s
+  root.durationSec = 3;
+  root.label = 'Voice agent (speak naturally)';
+
+  // 1: Self-service — Keel resolves without a human (info type)
+  const selfServe = makeNode(
+    '1',
+    'Self-service (instant)',
+    'info',
+    1,
+    5
+  );
+  selfServe.notes =
+    'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25+ languages';
+
+  // 2: Smart routing — Keel handles intake, transfers with context (human)
+  const smartRoute = makeNode(
+    '2',
+    'Smart routing with context',
+    'human',
+    1,
+    12
+  );
+  smartRoute.notes =
+    'Admissions · Financial aid · Bursar · Registrar · Academic advising — handed off with intent + identity prefilled';
+
+  // 0: 24/7 human escalation
+  const operator = makeNode('0', 'Operator (24/7)', 'human', 1, 8);
+  operator.notes = '"Speak to a person" anytime · emergencies · after-hours coverage';
+
+  root.children = [selfServe, smartRoute, operator];
+  addRepeatNodes(root);
+
+  const friction = calculateFriction(root, { hasOpZero: true, businessHoursOnly: false });
+
+  const warnings: string[] = [];
+  if (currentFriction && friction.totalScore >= currentFriction.totalScore) {
+    warnings.push(
+      `Voice-agent projection (${friction.totalScore}) didn't beat current (${currentFriction.totalScore}). Investigate.`
+    );
+  }
+
+  return {
+    tree: root,
+    friction,
+    rationale: VA_RATIONALE,
+    warnings,
+  };
+}

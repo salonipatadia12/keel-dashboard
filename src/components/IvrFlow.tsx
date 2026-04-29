@@ -13,7 +13,12 @@ import IvrNode from './IvrNode';
 import type { TreeNode } from '../lib/types';
 
 const NODE_W = 196;
-const NODE_H = 96;
+const NODE_H_DEFAULT = 96;
+const NODE_H_WITH_NOTES = 138;
+
+function nodeHeight(n: TreeNode): number {
+  return n.notes && n.isRecommended ? NODE_H_WITH_NOTES : NODE_H_DEFAULT;
+}
 
 function layout(root: TreeNode): { nodes: Node[]; edges: Edge[] } {
   const g = new dagre.graphlib.Graph({ multigraph: false });
@@ -31,7 +36,8 @@ function layout(root: TreeNode): { nodes: Node[]; edges: Edge[] } {
   const edges: Edge[] = [];
 
   const walk = (n: TreeNode, parentId: string | null) => {
-    g.setNode(n.id, { width: NODE_W, height: NODE_H });
+    const h = nodeHeight(n);
+    g.setNode(n.id, { width: NODE_W, height: h });
     nodes.push({
       id: n.id,
       type: 'ivr',
@@ -66,7 +72,10 @@ function layout(root: TreeNode): { nodes: Node[]; edges: Edge[] } {
 
   for (const n of nodes) {
     const p = g.node(n.id);
-    if (p) n.position = { x: p.x - NODE_W / 2, y: p.y - NODE_H / 2 };
+    if (p) {
+      const h = nodeHeight(n.data.node as TreeNode);
+      n.position = { x: p.x - NODE_W / 2, y: p.y - h / 2 };
+    }
   }
 
   return { nodes, edges };
@@ -77,12 +86,17 @@ const nodeTypes = { ivr: IvrNode };
 interface Props {
   tree: TreeNode;
   height: number;
-  variant?: 'current' | 'recommended';
+  variant?: 'current' | 'recommended' | 'voice_agent';
 }
 
 export default function IvrFlow({ tree, height, variant = 'current' }: Props) {
   const { nodes, edges } = useMemo(() => layout(tree), [tree]);
-  const accentDot = variant === 'recommended' ? 'bg-good' : 'bg-warn';
+  const accentDot =
+    variant === 'voice_agent'
+      ? 'bg-good'
+      : variant === 'recommended'
+        ? 'bg-accent'
+        : 'bg-warn';
   return (
     <div
       className="rounded-lg border border-line bg-bg2 relative overflow-hidden"

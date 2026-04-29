@@ -2,26 +2,72 @@ import { useState } from 'react';
 import type { Reference } from '../lib/types';
 import { ArrowRight } from './Icons';
 
+interface TierValue {
+  value: string | number;
+  caption?: string;
+}
+
 interface Props {
   icon?: React.ReactNode;
   label: string;
-  todayValue: string | number;
-  todayCaption?: string;
-  futureValue: string | number;
-  futureCaption?: string;
+  today: TierValue;
+  ivr: TierValue;
+  voice: TierValue;
   delta?: { value: string; tone: 'good' | 'bad' | 'neutral' };
   refs?: Reference[];
   emphasis?: boolean;
   formula?: string;
 }
 
+function Cell({
+  tier,
+  tone,
+  value,
+  caption,
+}: {
+  tier: 'today' | 'ivr' | 'voice';
+  tone: 'today' | 'mid' | 'best';
+  value: string | number;
+  caption?: string;
+}) {
+  const labels = {
+    today: 'Today',
+    ivr: 'Optimized IVR',
+    voice: 'Voice agent',
+  };
+  const cls =
+    tone === 'today'
+      ? 'bg-surface2/60 border-line/70 text-muted2'
+      : tone === 'mid'
+        ? 'bg-accent/5 border-accent/20 text-accent'
+        : 'bg-gradient-to-br from-good/8 to-good/3 border-good/30 text-good';
+  const captionCls =
+    tone === 'today'
+      ? 'text-muted'
+      : tone === 'mid'
+        ? 'text-accent/80 font-medium'
+        : 'text-good font-medium';
+  return (
+    <div className={`rounded-lg border px-3 py-2.5 ${cls}`}>
+      <div
+        className={`text-[9px] uppercase tracking-wider font-semibold mb-1 ${captionCls}`}
+      >
+        {labels[tier]}
+      </div>
+      <div className="text-2xl font-bold tabular-nums leading-none text-ink">{value}</div>
+      {caption && (
+        <div className={`text-[10px] mt-1.5 leading-tight ${captionCls}`}>{caption}</div>
+      )}
+    </div>
+  );
+}
+
 export default function KpiTile({
   icon,
   label,
-  todayValue,
-  todayCaption,
-  futureValue,
-  futureCaption,
+  today,
+  ivr,
+  voice,
   delta,
   refs,
   emphasis,
@@ -34,8 +80,8 @@ export default function KpiTile({
     delta?.tone === 'good'
       ? 'text-good bg-good/10 border-good/25'
       : delta?.tone === 'bad'
-      ? 'text-bad bg-bad/10 border-bad/25'
-      : 'text-muted bg-surface2 border-line';
+        ? 'text-bad bg-bad/10 border-bad/25'
+        : 'text-muted bg-surface2 border-line';
 
   return (
     <div
@@ -61,33 +107,16 @@ export default function KpiTile({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-lg bg-surface2/60 border border-line/70 px-3 py-2.5">
-          <div className="text-[9px] uppercase tracking-wider text-muted2 font-semibold mb-1">
-            Today
-          </div>
-          <div className="text-2xl font-bold tabular-nums leading-none text-ink">
-            {todayValue}
-          </div>
-          {todayCaption && (
-            <div className="text-[10px] text-muted mt-1.5 leading-tight">{todayCaption}</div>
-          )}
+      <div className="grid grid-cols-3 gap-1.5 items-center relative">
+        <Cell tier="today" tone="today" value={today.value} caption={today.caption} />
+        <Cell tier="ivr" tone="mid" value={ivr.value} caption={ivr.caption} />
+        <Cell tier="voice" tone="best" value={voice.value} caption={voice.caption} />
+        {/* Connecting arrows */}
+        <div className="absolute left-1/3 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-surface border border-line flex items-center justify-center text-muted2 z-10">
+          <ArrowRight size={9} />
         </div>
-        <div className="rounded-lg bg-gradient-to-br from-accent/8 to-good/5 border border-accent/25 px-3 py-2.5 relative">
-          <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-surface border border-line flex items-center justify-center text-muted2">
-            <ArrowRight size={11} />
-          </div>
-          <div className="text-[9px] uppercase tracking-wider text-accent font-semibold mb-1">
-            With Keel
-          </div>
-          <div className="text-2xl font-bold tabular-nums leading-none text-ink">
-            {futureValue}
-          </div>
-          {futureCaption && (
-            <div className="text-[10px] text-good mt-1.5 leading-tight font-medium">
-              {futureCaption}
-            </div>
-          )}
+        <div className="absolute left-2/3 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-surface border border-line flex items-center justify-center text-muted2 z-10">
+          <ArrowRight size={9} />
         </div>
       </div>
 

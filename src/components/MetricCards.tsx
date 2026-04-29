@@ -6,57 +6,57 @@ import { Activity, Layers, Globe, Phone, Sparkles } from './Icons';
 interface Props {
   current: FrictionResult;
   recommended: FrictionResult;
+  voiceAgent: FrictionResult;
   webRefs: Reference[];
   phoneRefs: Reference[];
   brandCurrent: BrandIndex;
   brandRecommended: BrandIndex;
+  brandVoice: BrandIndex;
   brandFormula: string;
 }
 
 export default function MetricCards({
   current,
   recommended,
+  voiceAgent,
   webRefs,
   phoneRefs,
   brandCurrent,
   brandRecommended,
+  brandVoice,
   brandFormula,
 }: Props) {
-  const frictionDelta = current.totalScore - recommended.totalScore;
-  const levelsDelta = current.maxDepth - recommended.maxDepth;
-  const brandDelta = brandRecommended.score - brandCurrent.score;
+  const frictionDelta = current.totalScore - voiceAgent.totalScore;
+  const brandDelta = brandVoice.score - brandCurrent.score;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
       <KpiTile
         icon={<Activity size={14} />}
         label="Friction Score"
-        todayValue={current.totalScore}
-        todayCaption={current.grade}
-        futureValue={recommended.totalScore}
-        futureCaption={recommended.grade}
+        today={{ value: current.totalScore, caption: current.grade }}
+        ivr={{ value: recommended.totalScore, caption: recommended.grade }}
+        voice={{ value: voiceAgent.totalScore, caption: voiceAgent.grade }}
         delta={{ value: `−${frictionDelta} pts`, tone: 'good' }}
         emphasis
       />
       <KpiTile
         icon={<Layers size={14} />}
         label="Menu Levels"
-        todayValue={current.maxDepth}
-        todayCaption="levels deep"
-        futureValue={recommended.maxDepth}
-        futureCaption={`${recommended.maxDepth} or fewer`}
+        today={{ value: current.maxDepth, caption: 'levels deep' }}
+        ivr={{ value: recommended.maxDepth, caption: 'flat menu' }}
+        voice={{ value: voiceAgent.maxDepth, caption: 'no menu — speak' }}
         delta={{
-          value: levelsDelta > 0 ? `−${levelsDelta}` : '—',
-          tone: levelsDelta > 0 ? 'good' : 'neutral',
+          value: `−${current.maxDepth - voiceAgent.maxDepth}`,
+          tone: 'good',
         }}
       />
       <KpiTile
         icon={<Globe size={14} />}
         label="Web Redirects"
-        todayValue={webRefs.length}
-        todayCaption="links spoken to caller"
-        futureValue={0}
-        futureCaption="no offload"
+        today={{ value: webRefs.length, caption: 'links spoken to caller' }}
+        ivr={{ value: 0, caption: 'no offload' }}
+        voice={{ value: 0, caption: 'resolved in-call' }}
         delta={{
           value: webRefs.length > 0 ? `−${webRefs.length}` : '—',
           tone: webRefs.length > 0 ? 'good' : 'neutral',
@@ -66,10 +66,9 @@ export default function MetricCards({
       <KpiTile
         icon={<Phone size={14} />}
         label="Phone Transfers"
-        todayValue={phoneRefs.length}
-        todayCaption="numbers given mid-call"
-        futureValue={0}
-        futureCaption="no offload"
+        today={{ value: phoneRefs.length, caption: 'numbers given mid-call' }}
+        ivr={{ value: 0, caption: 'no offload' }}
+        voice={{ value: 0, caption: 'no offload' }}
         delta={{
           value: phoneRefs.length > 0 ? `−${phoneRefs.length}` : '—',
           tone: phoneRefs.length > 0 ? 'good' : 'neutral',
@@ -79,10 +78,9 @@ export default function MetricCards({
       <KpiTile
         icon={<Sparkles size={14} />}
         label="Brand Reputation"
-        todayValue={brandCurrent.score}
-        todayCaption={brandCurrent.label}
-        futureValue={brandRecommended.score}
-        futureCaption={brandRecommended.label}
+        today={{ value: brandCurrent.score, caption: brandCurrent.label }}
+        ivr={{ value: brandRecommended.score, caption: brandRecommended.label }}
+        voice={{ value: brandVoice.score, caption: brandVoice.label }}
         delta={{ value: `+${brandDelta} pts`, tone: 'good' }}
         emphasis
         formula={brandFormula}

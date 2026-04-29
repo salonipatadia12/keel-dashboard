@@ -3,7 +3,7 @@ import raw from './data.json';
 import type { RawData } from './lib/types';
 import { buildPathTree } from './lib/pathTree';
 import { calculateFriction, frictionFromSheet } from './lib/friction';
-import { buildRecommendedTree } from './lib/recommend';
+import { buildRecommendedTree, buildVoiceAgentTree } from './lib/recommend';
 import { brandNarrative, brandReputationIndex } from './lib/brand';
 import TopBar from './components/TopBar';
 import MetricCards from './components/MetricCards';
@@ -63,12 +63,14 @@ export default function App() {
       : calculateFriction(built.root, { hasOpZero, businessHoursOnly });
 
     const recommended = buildRecommendedTree(built.root, currentFriction);
+    const voiceAgent = buildVoiceAgentTree(built.root, currentFriction);
 
     const webRefs = built.allNodes.flatMap((n) => n.urls);
     const phoneRefs = built.allNodes.flatMap((n) => n.phones);
 
     const brandCurrent = brandReputationIndex(currentFriction);
     const brandRecommended = brandReputationIndex(recommended.friction);
+    const brandVoice = brandReputationIndex(voiceAgent.friction);
 
     return {
       universityName,
@@ -76,10 +78,12 @@ export default function App() {
       built,
       currentFriction,
       recommended,
+      voiceAgent,
       webRefs,
       phoneRefs,
       brandCurrent,
       brandRecommended,
+      brandVoice,
       sheetRow,
     };
   }, []);
@@ -90,10 +94,12 @@ export default function App() {
     built,
     currentFriction,
     recommended,
+    voiceAgent,
     webRefs,
     phoneRefs,
     brandCurrent,
     brandRecommended,
+    brandVoice,
     sheetRow,
   } = view;
 
@@ -101,6 +107,7 @@ export default function App() {
 
   const currentHeight = Math.max(640, treeHeight(currentFriction.maxDepth));
   const recommendedHeight = Math.max(560, treeHeight(recommended.friction.maxDepth));
+  const voiceAgentHeight = Math.max(520, treeHeight(voiceAgent.friction.maxDepth));
 
   // Plain-English breakdown for the Brand Reputation tile's formula popover.
   const brandFormula = brandCurrent.breakdown.formula;
@@ -127,10 +134,9 @@ export default function App() {
               {universityName}
             </h1>
             <p className="text-sm text-muted mt-2 max-w-2xl leading-snug">
-              Where every caller-facing path stands today, and where Keel takes
-              it. Numbers below come straight from{' '}
-              {sheetRow ? 'the production friction scorer (WorkflowC)' : 'the in-browser scorer'}
-              .
+              Every caller-facing path on your line, scored on the friction a
+              real caller experiences — wait time, business-hours dependency,
+              menu listening, and prompt clarity.
             </p>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-muted">
@@ -162,10 +168,12 @@ export default function App() {
           <MetricCards
             current={currentFriction}
             recommended={recommended.friction}
+            voiceAgent={voiceAgent.friction}
             webRefs={webRefs}
             phoneRefs={phoneRefs}
             brandCurrent={brandCurrent}
             brandRecommended={brandRecommended}
+            brandVoice={brandVoice}
             brandFormula={brandFormula}
           />
         </div>
@@ -226,6 +234,13 @@ export default function App() {
             height={recommendedHeight}
             rationale={recommended.rationale}
           />
+          <TreePanel
+            variant="voice_agent"
+            tree={voiceAgent.tree}
+            friction={voiceAgent.friction}
+            height={voiceAgentHeight}
+            rationale={voiceAgent.rationale}
+          />
         </div>
 
         {/* Brand impact */}
@@ -234,8 +249,10 @@ export default function App() {
             university={shortName}
             current={brandCurrent}
             recommended={brandRecommended}
+            voiceAgent={brandVoice}
             currentNarrative={brandNarrative(currentFriction, false)}
             recommendedNarrative={brandNarrative(recommended.friction, true)}
+            voiceAgentNarrative={brandNarrative(voiceAgent.friction, true)}
           />
         </div>
 
@@ -244,6 +261,7 @@ export default function App() {
           university={shortName}
           currentScore={currentFriction.totalScore}
           recommendedScore={recommended.friction.totalScore}
+          voiceAgentScore={voiceAgent.friction.totalScore}
         />
 
         <div className="mt-8 text-center text-[10px] text-muted2 tracking-wider uppercase">
