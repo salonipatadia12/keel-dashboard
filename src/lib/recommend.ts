@@ -94,9 +94,15 @@ function cleanDeptLabel(raw: string): string {
     .replace(/^./, (c) => c.toUpperCase());
 }
 
-// Walk the current tree and collect every distinct human-reachable department.
-// Returns an ordered list of { label, isOperator } so we can promote each to a
-// depth-1 leaf in the recommended tree without losing any real services.
+// Walk the current tree and collect the IVR's actual department offerings
+// to mirror in the recommended tree. Strategy:
+//   - For each top-level child: if it has its own children, drill in (those
+//     are the real leaf services — e.g. CSU's 1>1..1>5). Otherwise the
+//     top-level child itself IS the offering (e.g. SJSU's "wellness" or
+//     "athletics" leaves that we never drilled into).
+//   - Skip generic "Digit X" placeholders (no real label captured).
+//   - Operator detection routes that label to "Operator (24/7)" so it
+//     becomes the digit-0 leaf in the recommendation, not a department.
 function extractDepartments(currentTree: TreeNode): {
   label: string;
   isOperator: boolean;
@@ -104,21 +110,30 @@ function extractDepartments(currentTree: TreeNode): {
   const out: { label: string; isOperator: boolean }[] = [];
   const seen = new Set<string>();
 
-  const walk = (n: TreeNode) => {
-    const realKids = n.children.filter((c) => c.outcomeType !== 'repeat');
-    const isLeafHuman = n.outcomeType === 'human' && realKids.length === 0;
-    if (isLeafHuman && n.label) {
-      const cleaned = cleanDeptLabel(n.label);
-      const key = cleaned.toLowerCase();
-      const isOperator = /operator|campus operator/i.test(n.label);
-      if (!seen.has(key)) {
-        seen.add(key);
-        out.push({ label: isOperator ? 'Operator (24/7)' : cleaned, isOperator });
-      }
-    }
-    n.children.forEach(walk);
+  const consider = (n: TreeNode) => {
+    if (!n.label || /^digit\s+/i.test(n.label)) return;
+    const cleaned = cleanDeptLabel(n.label);
+    const key = cleaned.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    const isOperator = /\boperator\b|campus operator/i.test(n.label);
+    out.push({ label: isOperator ? 'Operator (24/7)' : cleaned, isOperator });
   };
-  walk(currentTree);
+
+  for (const child of currentTree.children) {
+    if (child.outcomeType === 'repeat') continue;
+    const realKids = child.children.filter((c) => c.outcomeType !== 'repeat');
+    if (realKids.length > 0) {
+      // Submenu was drilled into — its leaves are the real offerings.
+      for (const grand of realKids) {
+        const grandKids = grand.children.filter((c) => c.outcomeType !== 'repeat');
+        if (grandKids.length === 0) consider(grand);
+      }
+    } else {
+      // Top-level child is itself the offering (SJSU pattern).
+      consider(child);
+    }
+  }
   return out;
 }
 

@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import raw from './data.json';
-import type { RawData } from './lib/types';
+import type { RawData, UniversityData } from './lib/types';
 import { buildPathTree } from './lib/pathTree';
 import {
   calculateFriction,
@@ -23,92 +23,99 @@ function treeHeight(maxDepth: number): number {
   return Math.max(360, levels * 92 + maxDepth * 64 + 80);
 }
 
+function buildView(uni: UniversityData) {
+  const universityName = uni.name;
+  const phone = uni.phone;
+
+  const built = buildPathTree(
+    uni.overview,
+    uni.menuMapping,
+    uni.scriptCapture,
+    universityName,
+    phone
+  );
+
+  const sysCharForUni = uni.systemCharacteristics.filter(
+    (s) => s.university === universityName
+  );
+  const hasOpZero = sysCharForUni.some((s) => s.has_operator_zero === true);
+
+  // businessHoursOnly: any human-reachable path that the IVR explicitly
+  // gates behind business hours.
+  const humanRows = uni.overview.filter(
+    (o) =>
+      o.university === universityName &&
+      o.outcome_type === 'human' &&
+      typeof o.business_hours === 'string' &&
+      o.business_hours.length > 0
+  );
+  const businessHoursOnly = humanRows.some((o) =>
+    /monday|m-f|am|pm/i.test(String(o.business_hours))
+  );
+
+  // self-service coverage of the existing IVR: each `info`-type leaf is
+  // assumed to bundle ~3 typical student questions (FAQ pages bundle hours,
+  // locations, and procedural answers).
+  const infoLeafCount = built.allNodes.filter(
+    (n) => n.outcomeType === 'info' && n.children.length === 0
+  ).length;
+  const todayQuestionsCovered = Math.min(
+    TYPICAL_STUDENT_QUESTIONS.length,
+    infoLeafCount * 3
+  );
+  const todayCoverage = todayQuestionsCovered / TYPICAL_STUDENT_QUESTIONS.length;
+
+  const sheetRow = uni.frictionScore.find(
+    (r) => r.university === universityName
+  );
+  const currentFriction = sheetRow
+    ? frictionFromSheet(sheetRow)
+    : calculateFriction(built.root, {
+        hasOpZero,
+        businessHoursOnly,
+        selfServiceCoverage: todayCoverage,
+      });
+
+  const recommended = buildRecommendedTree(built.root, currentFriction);
+  const voiceAgent = buildVoiceAgentTree(built.root, currentFriction);
+
+  const webRefs = built.allNodes.flatMap((n) => n.urls);
+  const phoneRefs = built.allNodes.flatMap((n) => n.phones);
+
+  const brandCurrent = brandReputationIndex(currentFriction);
+  const brandRecommended = brandReputationIndex(recommended.friction);
+  const brandVoice = brandReputationIndex(voiceAgent.friction);
+
+  return {
+    universityName,
+    phone,
+    built,
+    currentFriction,
+    recommended,
+    voiceAgent,
+    webRefs,
+    phoneRefs,
+    brandCurrent,
+    brandRecommended,
+    brandVoice,
+    sheetRow,
+    todayQuestionsCovered,
+  };
+}
+
+function shortLabel(name: string): string {
+  return name.split(',')[0];
+}
+
 export default function App() {
-  const view = useMemo(() => {
-    const uni = data.universityList[0];
-    const universityName = uni?.university || 'Unknown';
-    const phone = uni?.phone ? String(uni.phone) : '';
+  const universities = data.universities;
+  const [activeId, setActiveId] = useState(
+    universities[0]?.id ?? 'unknown'
+  );
+  const active =
+    universities.find((u) => u.id === activeId) ?? universities[0];
 
-    const built = buildPathTree(
-      data.overview,
-      data.menuMapping,
-      data.scriptCapture,
-      universityName,
-      phone
-    );
-
-    const sysCharForUni = data.systemCharacteristics.filter(
-      (s) => s.university === universityName
-    );
-    const hasOpZero = sysCharForUni.some((s) => s.has_operator_zero === true);
-
-    // businessHoursOnly: any human-reachable path that the IVR explicitly
-    // gates behind business hours (M-F + AM/PM markers in the row's
-    // business_hours field). When true, the IVR has no 24/7 escalation.
-    const humanRows = data.overview.filter(
-      (o) =>
-        o.university === universityName &&
-        o.outcome_type === 'human' &&
-        typeof o.business_hours === 'string' &&
-        o.business_hours.length > 0
-    );
-    const businessHoursOnly = humanRows.some((o) =>
-      /monday|m-f|am|pm/i.test(String(o.business_hours))
-    );
-
-    // self-service coverage of the existing IVR: each `info`-type leaf is
-    // assumed to cover ~3 of the typical student questions (FAQ-style
-    // pages tend to bundle hours, locations, and one or two procedural
-    // answers together). Routing-to-human leaves don't count — the
-    // question wasn't answered, just queued.
-    const infoLeafCount = built.allNodes.filter(
-      (n) => n.outcomeType === 'info' && n.children.length === 0
-    ).length;
-    const todayQuestionsCovered = Math.min(
-      TYPICAL_STUDENT_QUESTIONS.length,
-      infoLeafCount * 3
-    );
-    const todayCoverage = todayQuestionsCovered / TYPICAL_STUDENT_QUESTIONS.length;
-
-    // Prefer the friction-scorer row from the sheet. Fall back to the
-    // in-browser scorer if that sheet hasn't been populated yet.
-    const sheetRow = data.frictionScore.find(
-      (r) => r.university === universityName
-    );
-    const currentFriction = sheetRow
-      ? frictionFromSheet(sheetRow)
-      : calculateFriction(built.root, {
-          hasOpZero,
-          businessHoursOnly,
-          selfServiceCoverage: todayCoverage,
-        });
-
-    const recommended = buildRecommendedTree(built.root, currentFriction);
-    const voiceAgent = buildVoiceAgentTree(built.root, currentFriction);
-
-    const webRefs = built.allNodes.flatMap((n) => n.urls);
-    const phoneRefs = built.allNodes.flatMap((n) => n.phones);
-
-    const brandCurrent = brandReputationIndex(currentFriction);
-    const brandRecommended = brandReputationIndex(recommended.friction);
-    const brandVoice = brandReputationIndex(voiceAgent.friction);
-
-    return {
-      universityName,
-      phone,
-      built,
-      currentFriction,
-      recommended,
-      voiceAgent,
-      webRefs,
-      phoneRefs,
-      brandCurrent,
-      brandRecommended,
-      brandVoice,
-      sheetRow,
-      todayQuestionsCovered,
-    };
-  }, []);
+  const view = useMemo(() => buildView(active), [active]);
 
   const {
     universityName,
@@ -126,13 +133,10 @@ export default function App() {
     todayQuestionsCovered,
   } = view;
 
-  const shortName = universityName.split(',')[0];
-
+  const shortName = shortLabel(universityName);
   const currentHeight = Math.max(640, treeHeight(currentFriction.maxDepth));
   const recommendedHeight = Math.max(560, treeHeight(recommended.friction.maxDepth));
   const voiceAgentHeight = Math.max(520, treeHeight(voiceAgent.friction.maxDepth));
-
-  // Plain-English breakdown for the Brand Reputation tile's formula popover.
   const brandFormula = brandCurrent.breakdown.formula;
 
   return (
@@ -144,7 +148,31 @@ export default function App() {
       />
 
       <main className="max-w-[1440px] mx-auto px-8 py-7">
-        {/* Compact heading row — no oversized hero */}
+        {/* University tab strip — shown when more than one university is loaded */}
+        {universities.length > 1 && (
+          <div className="mb-6 border-b border-line flex items-end gap-1">
+            {universities.map((u) => {
+              const isActive = u.id === active.id;
+              return (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => setActiveId(u.id)}
+                  className={
+                    'px-4 py-2.5 text-[12px] font-semibold tracking-tight border-b-2 transition ' +
+                    (isActive
+                      ? 'text-ink border-accent'
+                      : 'text-muted border-transparent hover:text-ink2 hover:border-line2')
+                  }
+                >
+                  {shortLabel(u.name)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Compact heading row */}
         <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -186,7 +214,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* KPI strip — top of page, no hero block */}
+        {/* KPI strip */}
         <div className="mb-8">
           <MetricCards
             current={currentFriction}
@@ -202,7 +230,7 @@ export default function App() {
           />
         </div>
 
-        {/* Worst component callout — what specifically is broken */}
+        {/* Worst component callout */}
         {sheetRow?.worst_component && (
           <div className="mb-6 rounded-xl bg-surface border border-line shadow-card p-4">
             <div className="flex items-start gap-3 mb-3">
@@ -243,7 +271,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Tree comparison stacked full-width — graphs stay readable */}
+        {/* Tree comparison stacked full-width */}
         <div className="space-y-4 mb-6">
           <TreePanel
             variant="current"

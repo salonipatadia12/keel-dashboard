@@ -96,9 +96,11 @@ export interface FrictionScoreRow {
   scored_at: string;
 }
 
-export interface RawData {
+export interface UniversityData {
+  id: string;
   source: string;
-  generatedAt: string;
+  name: string;
+  phone: string;
   universityList: UniversityListRow[];
   overview: OverviewRow[];
   menuMapping: MenuItemRow[];
@@ -107,6 +109,12 @@ export interface RawData {
   tone: unknown[];
   frictionScore: FrictionScoreRow[];
   discoveryQueue: unknown[];
+}
+
+export interface RawData {
+  source: string;
+  generatedAt: string;
+  universities: UniversityData[];
 }
 
 export interface Reference {
