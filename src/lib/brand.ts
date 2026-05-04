@@ -29,9 +29,13 @@ export function brandReputationIndex(friction: FrictionResult): BrandIndex {
   const frictionInverse = Math.max(0, 100 - friction.totalScore);
   const clarityInverse = Math.max(0, 100 - friction.components.clarity);
 
-  const score = Math.round(
+  let score = Math.round(
     0.5 * frictionInverse + 0.3 * responderRatioPct + 0.2 * clarityInverse
   );
+  // Forced-queue IVRs (no menu, no self-service, no parallel routing) feel
+  // antiquated and unprofessional regardless of how friendly the human on the
+  // other end is. Penalize directly.
+  if (friction.queueOnly) score -= 30;
 
   let label: BrandIndex['label'];
   if (score <= 25) label = 'At Risk';

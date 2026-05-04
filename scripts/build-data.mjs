@@ -12,6 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOURCES = [
   { id: 'csu-sacramento', file: 'IVR2.0.xlsx' },
   { id: 'sjsu', file: 'IVR_San_Jose.xlsx' },
+  { id: 'santa-clara', file: 'IVR_Santa_Clara.xlsx' },
 ];
 
 function findFile(filename) {

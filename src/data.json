@@ -1,6 +1,6 @@
 {
-  "source": "IVR2.0.xlsx, IVR_San_Jose.xlsx",
-  "generatedAt": "2026-05-01T23:30:04.345Z",
+  "source": "IVR2.0.xlsx, IVR_San_Jose.xlsx, IVR_Santa_Clara.xlsx",
+  "generatedAt": "2026-05-04T22:32:53.242Z",
   "universities": [
     {
       "id": "csu-sacramento",
@@ -2641,6 +2641,167 @@
           "callId": "019de5c8-9f21-7000-83ef-d3794260a07d",
           "status": "analyzed",
           "created_at": null
+        }
+      ]
+    },
+    {
+      "id": "santa-clara",
+      "source": "IVR_Santa_Clara.xlsx",
+      "name": "Santa Clara University",
+      "phone": "14085544000",
+      "universityList": [
+        {
+          "university": "Santa Clara University",
+          "phone": 14085544000
+        }
+      ],
+      "overview": [
+        {
+          "callId": "019df514-080a-7002-9cad-fed832d50b4b",
+          "parent_call_id": null,
+          "university": "Santa Clara University",
+          "mode": "menu_discovery",
+          "business_hours": "Student-staffed line — typically Monday–Friday daytime hours",
+          "live_operator_available": true,
+          "voicemail_available": false,
+          "ivr_depth": 0,
+          "closed_hours_loop": null,
+          "notes": "No digit menu. Caller is dropped directly into a single hold queue answered by 'the next available student'. No self-service, no operator-zero, no parallel routing.",
+          "path": "main menu",
+          "depth": 0,
+          "digit_tested": null,
+          "outcome_detail": "Recording: 'Please hold while the next available student answers your call.' No options offered. After hold, a student worker picks up: 'How can I assist?'",
+          "outcome_type": "human",
+          "has_submenu": false,
+          "duration": 180
+        },
+        {
+          "callId": "019df514-080a-7002-9cad-fed832d50b4b-queue",
+          "parent_call_id": "019df514-080a-7002-9cad-fed832d50b4b",
+          "university": "Santa Clara University",
+          "mode": "digit_test",
+          "business_hours": "Student-staffed line — typically Monday–Friday daytime hours",
+          "live_operator_available": true,
+          "voicemail_available": false,
+          "ivr_depth": 1,
+          "closed_hours_loop": null,
+          "notes": "Forced hold queue — only path the IVR offers.",
+          "path": "queue",
+          "depth": 1,
+          "digit_tested": null,
+          "outcome_detail": "Caller is held until 'the next available student' picks up. No menu navigation, no self-service alternative.",
+          "outcome_type": "human",
+          "has_submenu": false,
+          "duration": 180
+        }
+      ],
+      "menuMapping": [
+        {
+          "callId": "019df514-080a-7002-9cad-fed832d50b4b",
+          "parent_call_id": null,
+          "university": "Santa Clara University",
+          "digit": null,
+          "menu_level": 0,
+          "option_label": "(no menu — forced hold queue)",
+          "type": "queue",
+          "leads_to": "student worker",
+          "human": true,
+          "notes": "No digits to press. Caller is held until a student picks up.",
+          "path": null,
+          "depth": 0
+        },
+        {
+          "callId": "019df514-080a-7002-9cad-fed832d50b4b",
+          "parent_call_id": null,
+          "university": "Santa Clara University",
+          "digit": null,
+          "menu_level": 0,
+          "option_label": "Hold queue → student worker",
+          "type": "queue",
+          "leads_to": "human (after wait)",
+          "human": true,
+          "notes": "No digit menu offered. Recording: 'Please hold while the next available student answers your call.'",
+          "path": null,
+          "depth": 0
+        }
+      ],
+      "scriptCapture": [
+        {
+          "callId": "019df514-080a-7002-9cad-fed832d50b4b",
+          "parent_call_id": null,
+          "university": "Santa Clara University",
+          "digit": null,
+          "key_instructions": "'Thank you for calling Santa Clara University. Please hold while the next available student answers your call.'",
+          "url_mentioned": null,
+          "compliance_warning": false,
+          "self_service_level": "none",
+          "path": null
+        }
+      ],
+      "systemCharacteristics": [
+        {
+          "callId": "019df514-080a-7002-9cad-fed832d50b4b",
+          "parent_call_id": null,
+          "university": "Santa Clara University",
+          "asks_questions": false,
+          "collects_id": false,
+          "collects_dtmf": false,
+          "has_operator_zero": false,
+          "loop_behavior": "No menu — caller held until a student worker picks up",
+          "escalation_path": "None offered. Caller cannot bypass the queue.",
+          "system_type": "Forced hold queue (no IVR menu)",
+          "path": null
+        }
+      ],
+      "tone": [
+        {
+          "callId": "019df514-080a-7002-9cad-fed832d50b4b",
+          "parent_call_id": null,
+          "university": "Santa Clara University",
+          "tone": "neutral",
+          "conversational": false,
+          "script_density": "low",
+          "empathy_level": "low",
+          "automation_level": "low",
+          "path": null
+        }
+      ],
+      "frictionScore": [
+        {
+          "parent_call_id": null,
+          "university": "Santa Clara University",
+          "total_score": 68,
+          "grade": "Poor",
+          "depth_score": 0,
+          "options_score": 0,
+          "time_score": 100,
+          "dead_end_score": 0,
+          "agent_access_score": 100,
+          "clarity_score": 0,
+          "operator_score": 100,
+          "max_depth": 1,
+          "avg_options": 1,
+          "total_nodes": 1,
+          "dead_end_count": 0,
+          "voicemail_count": 0,
+          "human_reachable_count": 1,
+          "worst_component": "Question Coverage",
+          "recommendations": "Add a digit menu so callers can route themselves to the right department instead of waiting on hold for a student to manually transfer them; Add self-service for common questions — 0 of 12 typical student questions can be answered without a human, even hours/locations/payment status; Add an operator-zero option AND a 24/7 escalation path — student workers are limited to business hours, and there is currently NO way to reach the IVR after-hours; Reduce reliance on student workers — a single forced queue means every caller waits for the same handful of students, and complex queries get bounced to a second queue (doubling the wait)",
+          "executive_summary": "**Executive Summary — Santa Clara University IVR Assessment**\n\nThe current IVR scores **68/100 (Poor)** on caller-experience friction. The defining problem is structural: Santa Clara has **no IVR menu at all**. Every inbound caller — regardless of why they're calling — is dropped into a **single forced hold queue** answered by 'the next available student worker'. There are no options to press, no self-service paths, no operator-zero shortcut, no after-hours fallback, and no parallel routing. A caller asking about office hours waits in the same queue as a caller with a complex billing dispute.\n\nThree concrete failure modes:\n1. **Zero caller agency** — without a menu, callers cannot signal their intent before talking to a human. The student worker has to triage every call manually, often transferring to a second queue and doubling the wait.\n2. **No self-service** — 0 of 12 typical student questions (hours, application status, tuition balance, transcript requests, account help, etc.) can be answered without a human. Callers wait on hold for answers an automated system could deliver in seconds.\n3. **Single point of failure** — when student workers are busy, every caller waits in the same queue. There is no after-hours coverage, no multilingual support, and no overflow path.\n\nKeel's voice agent eliminates all three. The agent answers ~10 of the 12 typical questions directly, escalates to a human only when judgment is needed, operates 24/7, and supports 25+ languages. Projected friction lands at **10/100 (Excellent)** — a **~63-point reduction** that converts every inbound call from a hold-queue gamble into a sub-10-second resolution.",
+          "scored_at": "2026-05-04T22:29:17.182544+00:00",
+          "self_service_score": 100,
+          "questions_covered": 0,
+          "questions_total": 12
+        }
+      ],
+      "discoveryQueue": [
+        {
+          "run_id": "1777933223856",
+          "university": "Santa Clara University",
+          "target_number": 14085544000,
+          "callId": "019df514-080a-7002-9cad-fed832d50b4b",
+          "status": "analyzed",
+          "created_at": "2026-05-04T22:20:23.946Z"
         }
       ]
     }

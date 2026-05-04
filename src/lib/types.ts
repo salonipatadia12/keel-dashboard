@@ -169,4 +169,8 @@ export interface FrictionResult {
   // Coverage as 0..1 fraction of typical student questions answered without
   // a human. Surfaced as a KPI tile and as a friction component.
   selfServiceCoverage: number;
+  // True when the IVR has no menu and every caller is forced into a single
+  // hold queue. Brand reputation penalizes this independently of the
+  // friction-score components.
+  queueOnly: boolean;
 }
