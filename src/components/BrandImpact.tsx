@@ -119,6 +119,7 @@ export default function BrandImpact({
             does to them. Three stages: today, optimized IVR, full voice
             agent.
           </p>
+          {/* spacing kept tight; copy intentionally avoids dashes */}
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-good/10 border border-good/25 text-good">
           <TrendingUp size={13} />
@@ -145,7 +146,7 @@ export default function BrandImpact({
           index={voiceAgent}
           narrative={voiceAgentNarrative}
           tone="best"
-          tagline={['Conversational', 'Multilingual', 'Self-service']}
+          tagline={['Conversational', 'Multilingual', 'Self service']}
         />
       </div>
     </section>

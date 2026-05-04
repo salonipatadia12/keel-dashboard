@@ -138,11 +138,11 @@ function extractDepartments(currentTree: TreeNode): {
 }
 
 const BASE_RATIONALE = [
-  'Every department from the current IVR is preserved — Keel routes by intent, so callers reach the right team without bucketing or losing services.',
-  "Replaced the 2-level digit menu with Keel's natural-language voice agent. Callers say what they need; digits remain as a fallback.",
-  'Operator zero is now 24/7. The current IVR strands evening, weekend, and after-hours callers — Keel does not.',
-  'Added a self-service path for hours, locations, and FAQs. ~30% of inbound calls are answered in <10s without a human.',
-  'Eliminated the 185-second submenu prompt. Average caller now reaches a resolution in under 10 seconds instead of nearly 3 minutes.',
+  'Every department from the current IVR is preserved. Keel routes by intent, so callers reach the right team without bucketing or losing services.',
+  "Replaced the 2 level digit menu with Keel's natural language voice agent. Callers say what they need; digits remain as a fallback.",
+  'Operator zero is now 24/7. The current IVR strands evening, weekend, and after hours callers. Keel does not.',
+  'Added a self service path for hours, locations, and FAQs. Around 30% of inbound calls are answered in under 10 seconds without a human.',
+  'Eliminated the 185 second submenu prompt. Average caller now reaches a resolution in under 10 seconds instead of nearly 3 minutes.',
 ];
 
 // Builds the recommended tree by:
@@ -200,7 +200,7 @@ export function buildRecommendedTree(
   }
 
   // Operator zero — always available, now 24/7
-  root.children.push(makeNode('0', hasOperatorInCurrent ? 'Operator (24/7)' : 'Operator (24/7) — added', 'human', 1));
+  root.children.push(makeNode('0', hasOperatorInCurrent ? 'Operator (24/7)' : 'Operator (24/7), added', 'human', 1));
 
   addRepeatNodes(root);
 
@@ -237,10 +237,10 @@ export function buildRecommendedTree(
 // ----------------------------------------------------------------------------
 
 const VA_RATIONALE = [
-  'A single agent handles the whole call — info, routing, escalation. There is no separate "operator" because Keel is the operator.',
-  'Resolves ~80% of common inquiries end-to-end without handing off — hours, status checks, billing, account help, FAQs.',
-  'When a human is needed, Keel collects intent + caller identity first and hands the agent a summary, so the human picks up at speed.',
-  '24/7 and multilingual. Evening, weekend, and non-English callers are no longer locked out.',
+  'A single agent handles the whole call (info, routing, escalation). There is no separate "operator" because Keel is the operator.',
+  'Resolves around 80% of common inquiries end to end without handing off. Hours, status checks, billing, account help, FAQs.',
+  'When a human is needed, Keel collects intent and caller identity first and hands the agent a summary, so the human picks up at speed.',
+  '24/7 and multilingual. Evening, weekend, and non English callers are no longer locked out.',
   "No menu, no digits to memorize. Callers state their intent in plain English the way they'd ask a person.",
 ];
 
@@ -267,7 +267,7 @@ export function buildVoiceAgentTree(
     8
   );
   aiAnswer.notes =
-    'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25+ languages · ~80% of calls resolved without escalation.';
+    'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25 languages · around 80% of calls resolved without escalation.';
 
   // 2) Routed to a human — when the AI hits something it shouldn't decide
   //    (academic standing, advisor specifics, complex disputes). Keel
@@ -281,7 +281,7 @@ export function buildVoiceAgentTree(
     12
   );
   humanRoute.notes =
-    'Complex cases · Specific advisor requests · Emergencies. Keel hands off with intent + caller identity prefilled.';
+    'Complex cases · Specific advisor requests · Emergencies. Keel hands off with intent and caller identity prefilled.';
 
   root.children = [aiAnswer, humanRoute];
   addRepeatNodes(root);

@@ -69,7 +69,7 @@ export default function TreePanel({
           <StatChip label="Friction" value={`${friction.totalScore} ${friction.grade}`} />
           <StatChip label="Levels" value={friction.maxDepth} />
           <StatChip label="Nodes" value={friction.totalNodes} />
-          <StatChip label="Dead-ends" value={friction.deadEndCount} />
+          <StatChip label="Dead ends" value={friction.deadEndCount} />
         </div>
       </div>
 

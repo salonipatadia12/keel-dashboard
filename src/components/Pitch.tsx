@@ -30,23 +30,23 @@ export default function Pitch({
         <p className="text-xl text-ink leading-relaxed font-medium tracking-tight max-w-4xl">
           {university}'s callers are walking into a{' '}
           <span className="bg-bad/10 text-bad border border-bad/30 px-2 py-0.5 rounded-md font-semibold">
-            {currentScore}-point friction wall
+            {currentScore} point friction wall
           </span>{' '}
           today. An optimized IVR alone takes that to{' '}
           <span className="bg-accent/10 text-accent border border-accent/30 px-2 py-0.5 rounded-md font-semibold">
             {recommendedScore}
           </span>
-          ; the full Keel voice agent — natural language, 24/7, multilingual,
-          self-service for ~60% of inquiries — drops it to{' '}
+          . The full Keel voice agent (natural language, 24/7, multilingual,
+          self service for around 60 percent of inquiries) drops it to{' '}
           <span className="bg-good/10 text-good border border-good/30 px-2 py-0.5 rounded-md font-semibold">
             {voiceAgentScore}
           </span>
-          . That's{' '}
+          . That is{' '}
           <span className="bg-good/10 text-good border border-good/30 px-2 py-0.5 rounded-md font-semibold">
-            −{drop} points
+            {drop} points
           </span>{' '}
-          of friction removed and every caller — evening, weekend, or
-          non-English — reaching the right answer in under 10 seconds.
+          of friction removed and every caller (evening, weekend, or non
+          English) reaching the right answer in under 10 seconds.
         </p>
       </div>
     </section>
