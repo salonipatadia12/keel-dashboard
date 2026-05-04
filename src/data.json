@@ -1,6 +1,6 @@
 {
   "source": "IVR2.0.xlsx, IVR_San_Jose.xlsx, IVR_Santa_Clara.xlsx",
-  "generatedAt": "2026-05-04T22:32:53.242Z",
+  "generatedAt": "2026-05-04T22:37:48.332Z",
   "universities": [
     {
       "id": "csu-sacramento",
@@ -617,7 +617,8 @@
           "scored_at": "2026-04-29T05:58:41.557153+00:00",
           "questions_covered": 0,
           "questions_total": 12,
-          "self_service_score": 100
+          "self_service_score": 100,
+          "avg_duration_sec": 172.6
         }
       ],
       "discoveryQueue": [
@@ -2582,7 +2583,8 @@
           "scored_at": "2026-05-01T23:28:39.679585+00:00",
           "self_service_score": 100,
           "questions_covered": 0,
-          "questions_total": 12
+          "questions_total": 12,
+          "avg_duration_sec": 129.2
         }
       ],
       "discoveryQueue": [
@@ -2791,7 +2793,8 @@
           "scored_at": "2026-05-04T22:29:17.182544+00:00",
           "self_service_score": 100,
           "questions_covered": 0,
-          "questions_total": 12
+          "questions_total": 12,
+          "avg_duration_sec": 180
         }
       ],
       "discoveryQueue": [

@@ -91,6 +91,11 @@ export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
     hasOpZero: row.operator_score === 0,
     selfServiceCoverage: coverage,
     queueOnly,
+    // Prefer explicit avg_duration_sec column; fall back to inverting the
+    // time_score formula clamp((avg-30)/1.5).
+    avgDurationSec:
+      row.avg_duration_sec ??
+      Math.max(0, Math.round(row.time_score * 1.5 + 30)),
   };
 }
 
@@ -264,5 +269,6 @@ export function calculateFriction(
     hasOpZero: inputs.hasOpZero,
     selfServiceCoverage: clamp(inputs.selfServiceCoverage, 0, 1),
     queueOnly: !!inputs.queueOnly,
+    avgDurationSec: Math.round(avgDuration),
   };
 }

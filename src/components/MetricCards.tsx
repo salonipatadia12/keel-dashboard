@@ -4,6 +4,14 @@ import type { BrandIndex } from '../lib/brand';
 import { TYPICAL_STUDENT_QUESTIONS } from '../lib/friction';
 import { Activity, Layers, Globe, Phone, Sparkles, HelpCircle } from './Icons';
 
+function fmtDuration(sec: number): string {
+  if (!Number.isFinite(sec) || sec <= 0) return '—';
+  if (sec < 60) return `${Math.round(sec)}s`;
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 interface Props {
   current: FrictionResult;
   recommended: FrictionResult;
@@ -42,10 +50,24 @@ export default function MetricCards({
     'Tracked questions:\n' +
     TYPICAL_STUDENT_QUESTIONS.map((q, i) => `  ${i + 1}. ${q}`).join('\n');
 
+  // Wait Time tile values
+  const todayWait = current.avgDurationSec ?? 0;
+  const ivrWait = recommended.avgDurationSec ?? 0;
+  const voiceWait = voiceAgent.avgDurationSec ?? 0;
+  const waitDelta = Math.max(0, todayWait - voiceWait);
+
+  // Today caption depends on the failure mode: queueOnly = pure hold,
+  // otherwise the time is split between menu listening and transfer wait.
+  const todayWaitCaption = current.queueOnly
+    ? '100% on hold'
+    : todayWait >= 60
+      ? 'on hold + menu nav'
+      : 'on the line';
+
   return (
     <div className="space-y-3">
-      {/* Hero row — the three numbers the pitch lives on */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {/* Hero row — the four numbers the pitch lives on */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiTile
           icon={<Activity size={14} />}
           label="Friction Score"
@@ -73,6 +95,15 @@ export default function MetricCards({
           delta={{ value: `+${coverageDelta} answered`, tone: 'good' }}
           emphasis
           formula={coverageFormula}
+        />
+        <KpiTile
+          icon={<Phone size={14} />}
+          label="Wait Time"
+          today={{ value: fmtDuration(todayWait), caption: todayWaitCaption }}
+          ivr={{ value: fmtDuration(ivrWait), caption: 'menu + route' }}
+          voice={{ value: fmtDuration(voiceWait), caption: 'instant intent' }}
+          delta={{ value: `−${fmtDuration(waitDelta)} saved`, tone: 'good' }}
+          emphasis
         />
         <KpiTile
           icon={<Sparkles size={14} />}
