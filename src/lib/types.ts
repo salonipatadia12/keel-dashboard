@@ -84,6 +84,10 @@ export interface FrictionScoreRow {
   // Optional — count of typical student questions answered without a human.
   questions_covered?: number;
   questions_total?: number;
+  // Optional — average call duration in seconds, surfaced on the Wait Time
+  // KPI. For queueOnly IVRs this is essentially 100% hold; for digit IVRs
+  // it includes menu nav + transfer wait + talk.
+  avg_duration_sec?: number;
   max_depth: number;
   avg_options: number;
   total_nodes: number;
@@ -173,4 +177,8 @@ export interface FrictionResult {
   // hold queue. Brand reputation penalizes this independently of the
   // friction-score components.
   queueOnly: boolean;
+  // Average end-to-end call duration in seconds. Surfaced on the Wait Time
+  // KPI tile so callers' raw time-on-the-line is visible separately from
+  // the structural friction components.
+  avgDurationSec: number;
 }
