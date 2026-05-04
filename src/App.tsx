@@ -196,8 +196,8 @@ export default function App() {
               {universityName}
             </h1>
             <p className="text-sm text-muted mt-2 max-w-2xl leading-snug">
-              Every caller-facing path on your line, scored on the friction a
-              real caller experiences — wait time, business-hours dependency,
+              Every caller facing path on your line, scored on the friction a
+              real caller experiences. Wait time, business hours dependency,
               menu listening, and prompt clarity.
             </p>
           </div>

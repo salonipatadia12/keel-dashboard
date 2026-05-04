@@ -2,7 +2,7 @@ import type { FrictionResult } from './types';
 
 export interface BrandIndex {
   score: number;
-  label: 'At Risk' | 'Below Bar' | 'Solid' | 'Best-in-Class';
+  label: 'At Risk' | 'Below Bar' | 'Solid' | 'Best in Class';
   perception: string[];
   // Formula breakdown — surfaced in the UI so the number isn't a black box
   breakdown: {
@@ -14,7 +14,7 @@ export interface BrandIndex {
 }
 
 const PERCEPTION_BAD = ['Bureaucratic', 'Hard to reach', 'Indifferent'];
-const PERCEPTION_GOOD = ['Modern', 'Responsive', 'Caller-first'];
+const PERCEPTION_GOOD = ['Modern', 'Responsive', 'Caller first'];
 
 export function brandReputationIndex(friction: FrictionResult): BrandIndex {
   // Humans AND AI agents both count as "the brand actually responded".
@@ -41,12 +41,12 @@ export function brandReputationIndex(friction: FrictionResult): BrandIndex {
   if (score <= 25) label = 'At Risk';
   else if (score <= 50) label = 'Below Bar';
   else if (score <= 75) label = 'Solid';
-  else label = 'Best-in-Class';
+  else label = 'Best in Class';
 
   const perception = score >= 60 ? PERCEPTION_GOOD : PERCEPTION_BAD;
 
   const formula =
-    `BRI = 50% × (100 − friction)\n     + 30% × responder-reachability%\n     + 20% × (100 − clarity)\n` +
+    `BRI = 50% × (100 minus friction)\n     + 30% × responder reachability %\n     + 20% × (100 minus clarity)\n` +
     `\n` +
     `    = 50% × ${frictionInverse}\n` +
     `    + 30% × ${responderRatioPct}\n` +
@@ -74,7 +74,7 @@ export function brandNarrative(
     (friction.deadEndCount / Math.max(friction.totalNodes, 1)) * 100
   );
   if (isRecommended) {
-    return `Callers reach the right person in ${friction.maxDepth} levels with no dead ends. The brand reads as: modern, responsive, caller-first.`;
+    return `Callers reach the right person in ${friction.maxDepth} levels with no dead ends. The brand reads as modern, responsive, caller first.`;
   }
-  return `Callers wait ${friction.maxDepth} menu levels and hit a dead-end on ${dePct}% of paths. The brand reads as: bureaucratic, hard to reach, indifferent.`;
+  return `Callers wait ${friction.maxDepth} menu levels and hit a dead end on ${dePct}% of paths. The brand reads as bureaucratic, hard to reach, indifferent.`;
 }
