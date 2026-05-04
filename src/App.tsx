@@ -65,6 +65,16 @@ function buildView(uni: UniversityData) {
   );
   const todayCoverage = todayQuestionsCovered / TYPICAL_STUDENT_QUESTIONS.length;
 
+  // queueOnly: no menu, just a single forced hold queue (Santa Clara pattern).
+  // Detect by counting non-repeat tree nodes — if there's at most one and
+  // it's a human leaf, the "IVR" is just a hold queue.
+  const realLeaves = built.allNodes.filter(
+    (n) => n.id !== 'root' && n.outcomeType !== 'repeat'
+  );
+  const queueOnly =
+    realLeaves.length === 0 ||
+    (realLeaves.length === 1 && realLeaves[0].outcomeType === 'human');
+
   const sheetRow = uni.frictionScore.find(
     (r) => r.university === universityName
   );
@@ -74,6 +84,7 @@ function buildView(uni: UniversityData) {
         hasOpZero,
         businessHoursOnly,
         selfServiceCoverage: todayCoverage,
+        queueOnly,
       });
 
   const recommended = buildRecommendedTree(built.root, currentFriction);

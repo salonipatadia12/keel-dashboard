@@ -15,6 +15,12 @@ export interface FrictionInputs {
   // model — caller pain is dominated by "I had to wait on hold to get an
   // answer the IVR could have given me."
   selfServiceCoverage: number;
+  // True when the IVR has no menu at all and every caller is forced into a
+  // single hold queue (Santa Clara pattern). Independent of bhOnly/hasOpZero
+  // because it represents a different failure mode: zero caller agency, no
+  // parallel routing, no escape hatch. Forces operator and agent_access to
+  // their worst values.
+  queueOnly?: boolean;
 }
 
 // Canonical list of common student-side questions used to compute self-service
@@ -54,6 +60,14 @@ export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
       ? row.questions_covered / row.questions_total
       : 0;
 
+  // Derive queueOnly from sheet signals: 1 node total, 1 human leaf,
+  // no dead-ends, ≤1 option per menu — that's a forced hold queue.
+  const queueOnly =
+    row.total_nodes <= 1 &&
+    row.human_reachable_count === 1 &&
+    row.dead_end_count === 0 &&
+    row.avg_options <= 1;
+
   return {
     totalScore: score,
     grade,
@@ -76,6 +90,7 @@ export function frictionFromSheet(row: FrictionScoreRow): FrictionResult {
     aiReachableCount: 0,
     hasOpZero: row.operator_score === 0,
     selfServiceCoverage: coverage,
+    queueOnly,
   };
 }
 
@@ -107,10 +122,11 @@ export function calculateFriction(
   root: TreeNode,
   inputs: FrictionInputs
 ): FrictionResult {
-  // All non-root, non-repeat nodes
+  // All non-root, non-repeat nodes. We identify root by id (empty digit alone
+  // is not safe — synthetic queue leaves can have empty digits too).
   const all: TreeNode[] = [];
   const walk = (n: TreeNode) => {
-    if (n.digit !== '' && n.outcomeType !== 'repeat') all.push(n);
+    if (n !== root && n.outcomeType !== 'repeat') all.push(n);
     n.children.forEach(walk);
   };
   walk(root);
@@ -158,12 +174,16 @@ export function calculateFriction(
   const timeScore = clamp((avgDuration - 30) / 1.5);
 
   // operator_score: business-hours dependency dominates; op-zero alone isn't
-  // enough if those operators are only there 8-5 M-F.
-  const operatorScore = inputs.businessHoursOnly
-    ? 80
-    : inputs.hasOpZero
-      ? 0
-      : 100;
+  // enough if those operators are only there 8-5 M-F. queueOnly is the worst
+  // case — no menu means the caller can't even reach the operator-zero
+  // shortcut because there is no menu to bypass.
+  const operatorScore = inputs.queueOnly
+    ? 100
+    : inputs.businessHoursOnly
+      ? 80
+      : inputs.hasOpZero
+        ? 0
+        : 100;
 
   // clarity_score: longest menu prompt above 30s of cumulative listen time
   // gets penalized. CSU's "1" submenu sits at 185s — that's punishing.
@@ -180,10 +200,17 @@ export function calculateFriction(
 
   // agent_access_score: low when callers can reach an actual responder
   // easily (a human OR an AI agent that gives a real answer). High when
-  // responders are hidden behind menus or unreachable.
-  let agentAccessScore = 100 - reachableRatio * 100;
-  if (inputs.hasOpZero) agentAccessScore -= 20;
-  agentAccessScore = clamp(agentAccessScore);
+  // responders are hidden behind menus or unreachable. queueOnly is the
+  // worst case — every caller funnels through the same single human queue,
+  // so when staff is busy, EVERYONE waits.
+  let agentAccessScore: number;
+  if (inputs.queueOnly) {
+    agentAccessScore = 100;
+  } else {
+    agentAccessScore = 100 - reachableRatio * 100;
+    if (inputs.hasOpZero) agentAccessScore -= 20;
+    agentAccessScore = clamp(agentAccessScore);
+  }
 
   // self_service_score: 0% coverage → 100 friction; 100% coverage → 0 friction.
   const selfServiceScore = clamp(
@@ -236,5 +263,6 @@ export function calculateFriction(
     aiReachableCount: aiCount,
     hasOpZero: inputs.hasOpZero,
     selfServiceCoverage: clamp(inputs.selfServiceCoverage, 0, 1),
+    queueOnly: !!inputs.queueOnly,
   };
 }
