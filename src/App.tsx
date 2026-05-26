@@ -181,8 +181,8 @@ export default function App() {
 
       <main className="max-w-[1440px] mx-auto px-8 py-7">
         {/* Page tabs */}
-        <div className="mb-5 flex items-center justify-between border-b border-line">
-          <nav className="flex items-end gap-1">
+        <div className="mb-6 flex items-center justify-between border-b border-line">
+          <nav className="flex items-end gap-2">
             <PageTab
               label="University report"
               active={page === 'report'}
@@ -195,7 +195,7 @@ export default function App() {
               badge={universities.length}
             />
           </nav>
-          <div className="pb-2 text-[10px] uppercase tracking-[0.18em] text-muted font-semibold">
+          <div className="pb-3 text-[12px] uppercase tracking-[0.18em] text-muted font-semibold">
             {universities.length} universities audited
           </div>
         </div>
@@ -394,17 +394,17 @@ function PageTab({
       type="button"
       onClick={onClick}
       className={
-        'flex items-center gap-2 px-4 py-2.5 text-[12px] font-semibold tracking-tight border-b-2 transition -mb-px ' +
+        'flex items-center gap-2.5 px-6 py-4 text-[17px] font-semibold tracking-tight border-b-[3px] transition -mb-px ' +
         (active
           ? 'text-ink border-accent'
-          : 'text-muted border-transparent hover:text-ink2 hover:border-line2')
+          : 'text-muted hover:text-ink2 border-transparent hover:border-line2')
       }
     >
       {label}
       {typeof badge === 'number' && (
         <span
           className={
-            'text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums ' +
+            'text-[13px] font-bold px-2 py-0.5 rounded tabular-nums ' +
             (active
               ? 'bg-accent/15 text-accent'
               : 'bg-surface text-muted border border-line')
