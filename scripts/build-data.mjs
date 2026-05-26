@@ -8,15 +8,23 @@ import XLSX from 'xlsx';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Each entry is one university workspace. Filenames are looked up first in
-// the parent folder (local dev), then in the pitch repo itself (CI).
+// the parent folder's output_universities/ (local dev), then the parent folder
+// itself (legacy), then the pitch repo itself (CI).
 const SOURCES = [
   { id: 'csu-sacramento', file: 'IVR2.0.xlsx' },
   { id: 'sjsu', file: 'IVR_San_Jose.xlsx' },
   { id: 'santa-clara', file: 'IVR_Santa_Clara.xlsx' },
+  { id: 'uc-berkeley', file: 'IVR_UC_Berkeley.xlsx' },
+  { id: 'uc-davis', file: 'IVR_UC_Davis.xlsx' },
+  { id: 'uc-irvine', file: 'IVR_UC_Irvine.xlsx' },
+  { id: 'uc-san-diego', file: 'IVR_UC_San_Diego.xlsx' },
+  { id: 'ucla', file: 'IVR_UCLA.xlsx' },
+  { id: 'sdsu', file: 'IVR_SDSU.xlsx' },
 ];
 
 function findFile(filename) {
   const candidates = [
+    join(__dirname, '..', '..', 'output_universities', filename),
     join(__dirname, '..', '..', filename),
     join(__dirname, '..', filename),
   ];
