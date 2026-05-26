@@ -36,7 +36,7 @@ export default function Pitch({
           <span className="bg-accent/10 text-accent border border-accent/30 px-2 py-0.5 rounded-md font-semibold">
             {recommendedScore}
           </span>
-          . The full Keel voice agent (natural language, 24/7, multilingual,
+          . A full voice agent (natural language, 24/7, multilingual,
           self service for around 60 percent of inquiries) drops it to{' '}
           <span className="bg-good/10 text-good border border-good/30 px-2 py-0.5 rounded-md font-semibold">
             {voiceAgentScore}

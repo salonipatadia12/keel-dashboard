@@ -371,7 +371,7 @@ export default function App() {
         )}
 
         <div className="mt-8 text-center text-[10px] text-muted2 tracking-wider uppercase">
-          Keel · Voice agents that don't make callers wait
+          Voice agents that don't make callers wait
         </div>
       </main>
     </div>

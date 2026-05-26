@@ -93,7 +93,7 @@ export default function HeroScore({ university, current, recommended }: Props) {
           </h2>
           <p className="text-sm text-muted leading-relaxed max-w-md">
             Friction is the composite cost callers pay to reach a person — depth,
-            options, dead-ends, time. Lower is better. Keel's voice agent
+            options, dead-ends, time. Lower is better. A voice agent
             replaces the menu tree and changes the math.
           </p>
 
@@ -139,7 +139,7 @@ export default function HeroScore({ university, current, recommended }: Props) {
               />
             </svg>
             <span className="text-[9px] uppercase tracking-wider text-accent mt-1.5">
-              with Keel
+              with voice agent
             </span>
           </div>
           <div className="text-center">

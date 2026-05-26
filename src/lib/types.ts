@@ -166,7 +166,7 @@ export interface FrictionResult {
   deadEndCount: number;
   voicemailCount: number;
   humanReachableCount: number;
-  // Number of leaves of type 'ai' — a Keel-style voice agent that gives
+  // Number of leaves of type 'ai' — a voice agent that gives
   // a real answer. Counts toward "reachable responders" alongside humans.
   aiReachableCount: number;
   hasOpZero: boolean;

@@ -49,32 +49,32 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
   return (
     <section className="rounded-xl bg-surface border border-line shadow-card p-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
+      <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex items-center gap-2 mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-            <span className="text-[10px] uppercase tracking-[0.2em] text-muted font-semibold">
+            <span className="text-[12px] uppercase tracking-[0.2em] text-muted font-semibold">
               Peer benchmark
             </span>
           </div>
-          <h2 className="text-xl font-semibold tracking-tight text-ink mb-1">
+          <h2 className="text-3xl font-semibold tracking-tight text-ink mb-2">
             Cohort comparison · {rows.length} universities audited
           </h2>
-          <p className="text-[12.5px] text-muted leading-snug max-w-2xl">
+          <p className="text-[15px] text-muted leading-snug max-w-2xl">
             Every university we have audited lands in the friction-heavy band.
-            The gap between today's IVR and a Keel voice agent is consistently
+            The gap between today's IVR and a voice agent is consistently
             50-70 points — the problem and the fix are the same shape across
             the cohort.
           </p>
         </div>
         {activeRow && activeRank && (
           <div className="text-right">
-            <div className="text-[10px] uppercase tracking-[0.16em] text-muted font-semibold mb-1">
+            <div className="text-[12px] uppercase tracking-[0.16em] text-muted font-semibold mb-1.5">
               {shortLabel(activeRow.name)} ranks
             </div>
-            <div className="text-2xl font-semibold text-ink tabular-nums leading-none">
+            <div className="text-4xl font-semibold text-ink tabular-nums leading-none">
               #{activeRank}
-              <span className="text-[13px] text-muted ml-1 font-normal">
+              <span className="text-[16px] text-muted ml-1.5 font-normal">
                 of {rows.length}
               </span>
             </div>
@@ -83,7 +83,7 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
       </div>
 
       {/* Cohort summary strip */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <Stat
           label="Cohort avg today"
           value={Math.round(avgCurrent)}
@@ -91,7 +91,7 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
           suffix="/100"
         />
         <Stat
-          label="Cohort avg w/ Keel"
+          label="Cohort avg with voice agent"
           value={Math.round(avgVoice)}
           tone="good"
           suffix="/100"
@@ -106,11 +106,11 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
       </div>
 
       {/* Ranked bars */}
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {/* Scale header */}
-        <div className="grid grid-cols-[180px_1fr_60px] gap-3 px-1 pb-1 text-[10px] uppercase tracking-[0.14em] text-muted font-semibold">
+        <div className="grid grid-cols-[240px_1fr_80px] gap-4 px-2 pb-2 text-[12px] uppercase tracking-[0.14em] text-muted font-semibold">
           <span>University</span>
-          <span>Today (red) → Keel (green)</span>
+          <span>Today (red) → Voice agent (green)</span>
           <span className="text-right">Drop</span>
         </div>
 
@@ -125,7 +125,7 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
               type="button"
               onClick={() => onSelect(r.id)}
               className={
-                'w-full grid grid-cols-[180px_1fr_60px] gap-3 items-center px-2 py-2 rounded-md text-left transition ' +
+                'w-full grid grid-cols-[240px_1fr_80px] gap-4 items-center px-3 py-2.5 rounded-md text-left transition ' +
                 (isActive
                   ? 'bg-accent/10 ring-1 ring-accent/40'
                   : 'hover:bg-bg/60')
@@ -135,7 +135,7 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
               <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={
-                    'text-[12.5px] tracking-tight truncate ' +
+                    'text-[15px] tracking-tight truncate ' +
                     (isActive
                       ? 'font-semibold text-ink'
                       : 'font-medium text-ink2')
@@ -145,29 +145,29 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
                   {shortLabel(r.name)}
                 </span>
                 {isActive && (
-                  <span className="text-[9px] uppercase tracking-[0.14em] text-accent font-bold shrink-0">
+                  <span className="text-[10px] uppercase tracking-[0.14em] text-accent font-bold shrink-0">
                     you
                   </span>
                 )}
               </div>
 
               {/* Bar */}
-              <div className="relative h-6 rounded-md bg-bg/60 border border-line overflow-hidden">
+              <div className="relative h-9 rounded-md bg-bg/60 border border-line overflow-hidden">
                 {/* Current friction (red) */}
                 <div
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-bad to-bad2/80 flex items-center justify-end pr-2"
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-bad to-bad2/80 flex items-center justify-end pr-2.5"
                   style={{ width: pct(r.currentScore) }}
                 >
-                  <span className="text-[10px] font-bold text-white tabular-nums drop-shadow">
+                  <span className="text-[13px] font-bold text-white tabular-nums drop-shadow">
                     {r.currentScore}
                   </span>
                 </div>
                 {/* Voice agent friction (green) — overlaid at left */}
                 <div
-                  className="absolute inset-y-0 left-0 bg-good flex items-center justify-end pr-1.5 border-r border-good2"
+                  className="absolute inset-y-0 left-0 bg-good flex items-center justify-end pr-2 border-r border-good2"
                   style={{ width: pct(r.voiceAgentScore) }}
                 >
-                  <span className="text-[9px] font-bold text-white tabular-nums drop-shadow">
+                  <span className="text-[12px] font-bold text-white tabular-nums drop-shadow">
                     {r.voiceAgentScore}
                   </span>
                 </div>
@@ -177,7 +177,7 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
               <div className="text-right">
                 <span
                   className={
-                    'text-[12px] font-bold tabular-nums px-1.5 py-0.5 rounded border ' +
+                    'text-[14px] font-bold tabular-nums px-2 py-1 rounded border ' +
                     colors.bg +
                     ' ' +
                     colors.text +
@@ -193,7 +193,7 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
         })}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-line text-[11px] text-muted flex items-center justify-between flex-wrap gap-2">
+      <div className="mt-5 pt-4 border-t border-line text-[13px] text-muted flex items-center justify-between flex-wrap gap-2">
         <span>
           Click any row to open that university's full report.
         </span>
@@ -225,14 +225,14 @@ function Stat({
       ? 'text-bad2'
       : 'text-accent';
   return (
-    <div className="rounded-lg bg-bg/60 border border-line p-3">
-      <div className="text-[10px] uppercase tracking-[0.16em] text-muted font-semibold mb-1">
+    <div className="rounded-lg bg-bg/60 border border-line p-4">
+      <div className="text-[12px] uppercase tracking-[0.16em] text-muted font-semibold mb-2">
         {label}
       </div>
-      <div className={'text-2xl font-semibold tracking-tight tabular-nums leading-none ' + toneClass}>
+      <div className={'text-4xl font-semibold tracking-tight tabular-nums leading-none ' + toneClass}>
         {prefix}
         {value}
-        <span className="text-[11px] text-muted font-normal ml-0.5">
+        <span className="text-[14px] text-muted font-normal ml-1">
           {suffix}
         </span>
       </div>

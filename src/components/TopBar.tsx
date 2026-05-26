@@ -28,7 +28,6 @@ export default function TopBar({ university, phone, generatedAt }: Props) {
       <div className="max-w-[1440px] mx-auto px-8 h-14 flex items-center gap-4">
         <div className="flex items-center gap-2">
           <Logo size={22} />
-          <span className="text-sm font-semibold tracking-tight text-ink">Keel</span>
           <span className="text-[10px] uppercase tracking-[0.18em] text-muted ml-1 px-2 py-0.5 rounded bg-surface border border-line">
             v1
           </span>

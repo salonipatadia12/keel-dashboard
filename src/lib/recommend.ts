@@ -138,9 +138,9 @@ function extractDepartments(currentTree: TreeNode): {
 }
 
 const BASE_RATIONALE = [
-  'Every department from the current IVR is preserved. Keel routes by intent, so callers reach the right team without bucketing or losing services.',
-  "Replaced the 2 level digit menu with Keel's natural language voice agent. Callers say what they need; digits remain as a fallback.",
-  'Operator zero is now 24/7. The current IVR strands evening, weekend, and after hours callers. Keel does not.',
+  'Every department from the current IVR is preserved. The voice agent routes by intent, so callers reach the right team without bucketing or losing services.',
+  "Replaced the 2 level digit menu with a natural language voice agent. Callers say what they need; digits remain as a fallback.",
+  'Operator zero is now 24/7. The current IVR strands evening, weekend, and after hours callers. The voice agent does not.',
   'Added a self service path for hours, locations, and FAQs. Around 30% of inbound calls are answered in under 10 seconds without a human.',
   'Eliminated the 185 second submenu prompt. Average caller now reaches a resolution in under 10 seconds instead of nearly 3 minutes.',
 ];
@@ -149,7 +149,7 @@ const BASE_RATIONALE = [
 // 1. Preserving every distinct human-reachable department from the current tree
 //    as a direct depth-1 leaf (no bucketing, no information loss).
 // 2. Promoting "operator" (digit 0) to a 24/7 leaf.
-// 3. Adding a self-service info leaf for hours/locations/FAQs that Keel can
+// 3. Adding a self-service info leaf for hours/locations/FAQs that the voice agent can
 //    answer instantly, no human needed.
 // 4. Keeping the # repeat-menu fallback.
 export function buildRecommendedTree(
@@ -204,7 +204,7 @@ export function buildRecommendedTree(
 
   addRepeatNodes(root);
 
-  // Keel is 24/7. Coverage: a flat IVR with one FAQ leaf can self-serve
+  // the voice agent is 24/7. Coverage: a flat IVR with one FAQ leaf can self-serve
   // ~3 of the 12 typical student questions (hours + a couple procedural
   // answers); everything else still requires a human.
   const friction = calculateFriction(root, {
@@ -229,7 +229,7 @@ export function buildRecommendedTree(
 }
 
 // ----------------------------------------------------------------------------
-// Voice-agent tier — Keel runs as a single conversational agent instead of a
+// Voice-agent tier — the voice agent runs as a single conversational agent instead of a
 // digit menu. There is no separate "operator" node, no separate "self-service"
 // vs "smart routing" bucket: the voice agent IS all of those. From the
 // caller's perspective it's one entity that picks up, understands, and
@@ -237,9 +237,9 @@ export function buildRecommendedTree(
 // ----------------------------------------------------------------------------
 
 const VA_RATIONALE = [
-  'A single agent handles the whole call (info, routing, escalation). There is no separate "operator" because Keel is the operator.',
+  'A single agent handles the whole call (info, routing, escalation). There is no separate "operator" because the agent is the operator.',
   'Resolves around 80% of common inquiries end to end without handing off. Hours, status checks, billing, account help, FAQs.',
-  'When a human is needed, Keel collects intent and caller identity first and hands the agent a summary, so the human picks up at speed.',
+  'When a human is needed, the agent collects intent and caller identity first and hands the human a summary, so the call picks up at speed.',
   '24/7 and multilingual. Evening, weekend, and non English callers are no longer locked out.',
   "No menu, no digits to memorize. Callers state their intent in plain English the way they'd ask a person.",
 ];
@@ -253,7 +253,7 @@ export function buildVoiceAgentTree(
   root.durationSec = 3; // Greeting only — "Hi, this is the Sac State assistant."
   root.label = 'Voice agent (speak naturally)';
 
-  // Two leaves, capturing the two paths a Keel call can take.
+  // Two leaves, capturing the two paths a the voice agent call can take.
   //
   // 1) AI-handled — for the ~10 of 12 typical student questions the voice
   //    agent can answer end-to-end without involving a human. Type 'ai'
@@ -270,7 +270,7 @@ export function buildVoiceAgentTree(
     'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25 languages · around 80% of calls resolved without escalation.';
 
   // 2) Routed to a human — when the AI hits something it shouldn't decide
-  //    (academic standing, advisor specifics, complex disputes). Keel
+  //    (academic standing, advisor specifics, complex disputes). the voice agent
   //    transfers with intent + caller context already in hand so the human
   //    picks up at speed.
   const humanRoute = makeNode(
@@ -281,7 +281,7 @@ export function buildVoiceAgentTree(
     12
   );
   humanRoute.notes =
-    'Complex cases · Specific advisor requests · Emergencies. Keel hands off with intent and caller identity prefilled.';
+    'Complex cases · Specific advisor requests · Emergencies. The agent hands off with intent and caller identity prefilled.';
 
   root.children = [aiAnswer, humanRoute];
   addRepeatNodes(root);
