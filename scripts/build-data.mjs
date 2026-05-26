@@ -28,6 +28,9 @@ const SOURCES = [
   { id: 'csun', file: 'IVR_Cal_State_Northridge.xlsx' },
   { id: 'calstate-la', file: 'IVR_CSU_Los_Angeles.xlsx' },
   { id: 'csuf', file: 'IVR_Cal_State_Fullerton.xlsx' },
+  { id: 'uiuc', file: 'IVR_UIUC.xlsx' },
+  { id: 'illinois-state', file: 'IVR_Illinois_State.xlsx' },
+  { id: 'ball-state', file: 'IVR_Ball_State.xlsx' },
 ];
 
 function findFile(filename) {
