@@ -20,6 +20,14 @@ const SOURCES = [
   { id: 'uc-san-diego', file: 'IVR_UC_San_Diego.xlsx' },
   { id: 'ucla', file: 'IVR_UCLA.xlsx' },
   { id: 'sdsu', file: 'IVR_SDSU.xlsx' },
+  { id: 'csulb', file: 'IVR_Cal_State_Long_Beach.xlsx' },
+  { id: 'iu-indianapolis', file: 'IVR_Indiana_Indianapolis.xlsx' },
+  { id: 'usc', file: 'IVR_USC.xlsx' },
+  { id: 'stanford', file: 'IVR_Stanford.xlsx' },
+  { id: 'iu-bloomington', file: 'IVR_Indiana_Bloomington.xlsx' },
+  { id: 'csun', file: 'IVR_Cal_State_Northridge.xlsx' },
+  { id: 'calstate-la', file: 'IVR_CSU_Los_Angeles.xlsx' },
+  { id: 'csuf', file: 'IVR_Cal_State_Fullerton.xlsx' },
 ];
 
 function findFile(filename) {
