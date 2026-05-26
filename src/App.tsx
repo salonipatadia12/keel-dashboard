@@ -15,6 +15,7 @@ import TreePanel from './components/TreePanel';
 import BrandImpact from './components/BrandImpact';
 import Pitch from './components/Pitch';
 import UniversitySelector from './components/UniversitySelector';
+import CohortComparison, { type CohortRow } from './components/CohortComparison';
 import { Activity } from './components/Icons';
 
 const data = raw as unknown as RawData;
@@ -128,6 +129,22 @@ export default function App() {
     universities.find((u) => u.id === activeId) ?? universities[0];
 
   const view = useMemo(() => buildView(active), [active]);
+
+  // Compute current + voice-agent friction for every university in the cohort
+  // so the comparison panel can show all rows side by side. Cheap because
+  // friction calc is in-memory tree work — done once per page load.
+  const cohortRows = useMemo<CohortRow[]>(() => {
+    return universities.map((u) => {
+      const v = buildView(u);
+      return {
+        id: u.id,
+        name: u.name,
+        currentScore: v.currentFriction.totalScore,
+        voiceAgentScore: v.voiceAgent.friction.totalScore,
+        grade: v.currentFriction.grade,
+      };
+    });
+  }, [universities]);
 
   const {
     universityName,
@@ -309,6 +326,17 @@ export default function App() {
             voiceAgentNarrative={brandNarrative(voiceAgent.friction, true)}
           />
         </div>
+
+        {/* Cohort comparison — peer benchmark across all audited universities */}
+        {cohortRows.length > 1 && (
+          <div className="mb-6">
+            <CohortComparison
+              rows={cohortRows}
+              activeId={active.id}
+              onSelect={setActiveId}
+            />
+          </div>
+        )}
 
         {/* Pitch */}
         <Pitch
