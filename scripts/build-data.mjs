@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // the parent folder's output_universities/ (local dev), then the parent folder
 // itself (legacy), then the pitch repo itself (CI).
 const SOURCES = [
-  { id: 'csu-sacramento', file: 'IVR2.0.xlsx' },
+  { id: 'csu-sacramento', file: 'IVR_CSU_Sacramento.xlsx' },
   { id: 'sjsu', file: 'IVR_San_Jose.xlsx' },
   { id: 'santa-clara', file: 'IVR_Santa_Clara.xlsx' },
   { id: 'uc-berkeley', file: 'IVR_UC_Berkeley.xlsx' },
