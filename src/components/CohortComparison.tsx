@@ -195,7 +195,7 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
 
       <div className="mt-4 pt-3 border-t border-line text-[11px] text-muted flex items-center justify-between flex-wrap gap-2">
         <span>
-          Click any row to load that university into the report above.
+          Click any row to open that university's full report.
         </span>
         <span className="tabular-nums">
           sorted by today's friction · highest first

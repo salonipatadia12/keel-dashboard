@@ -120,11 +120,14 @@ function shortLabel(name: string): string {
   return name.split(',')[0];
 }
 
+type Page = 'report' | 'rankings';
+
 export default function App() {
   const universities = data.universities;
   const [activeId, setActiveId] = useState(
     universities[0]?.id ?? 'unknown'
   );
+  const [page, setPage] = useState<Page>('report');
   const active =
     universities.find((u) => u.id === activeId) ?? universities[0];
 
@@ -177,17 +180,36 @@ export default function App() {
       />
 
       <main className="max-w-[1440px] mx-auto px-8 py-7">
+        {/* Page tabs */}
+        <div className="mb-5 flex items-center justify-between border-b border-line">
+          <nav className="flex items-end gap-1">
+            <PageTab
+              label="University report"
+              active={page === 'report'}
+              onClick={() => setPage('report')}
+            />
+            <PageTab
+              label="Rankings"
+              active={page === 'rankings'}
+              onClick={() => setPage('rankings')}
+              badge={universities.length}
+            />
+          </nav>
+          <div className="pb-2 text-[10px] uppercase tracking-[0.18em] text-muted font-semibold">
+            {universities.length} universities audited
+          </div>
+        </div>
+
+        {page === 'report' && (
+          <>
         {/* University selector — dropdown with search, sorted by friction */}
         {universities.length > 1 && (
-          <div className="mb-5 flex items-center justify-between">
+          <div className="mb-5 flex items-center">
             <UniversitySelector
               universities={universities}
               activeId={active.id}
               onSelect={setActiveId}
             />
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted font-semibold">
-              {universities.length} universities audited
-            </div>
           </div>
         )}
 
@@ -327,17 +349,6 @@ export default function App() {
           />
         </div>
 
-        {/* Cohort comparison — peer benchmark across all audited universities */}
-        {cohortRows.length > 1 && (
-          <div className="mb-6">
-            <CohortComparison
-              rows={cohortRows}
-              activeId={active.id}
-              onSelect={setActiveId}
-            />
-          </div>
-        )}
-
         {/* Pitch */}
         <Pitch
           university={shortName}
@@ -345,11 +356,63 @@ export default function App() {
           recommendedScore={recommended.friction.totalScore}
           voiceAgentScore={voiceAgent.friction.totalScore}
         />
+          </>
+        )}
+
+        {page === 'rankings' && (
+          <CohortComparison
+            rows={cohortRows}
+            activeId={active.id}
+            onSelect={(id) => {
+              setActiveId(id);
+              setPage('report');
+            }}
+          />
+        )}
 
         <div className="mt-8 text-center text-[10px] text-muted2 tracking-wider uppercase">
           Keel · Voice agents that don't make callers wait
         </div>
       </main>
     </div>
+  );
+}
+
+function PageTab({
+  label,
+  active,
+  onClick,
+  badge,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  badge?: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        'flex items-center gap-2 px-4 py-2.5 text-[12px] font-semibold tracking-tight border-b-2 transition -mb-px ' +
+        (active
+          ? 'text-ink border-accent'
+          : 'text-muted border-transparent hover:text-ink2 hover:border-line2')
+      }
+    >
+      {label}
+      {typeof badge === 'number' && (
+        <span
+          className={
+            'text-[10px] font-bold px-1.5 py-0.5 rounded tabular-nums ' +
+            (active
+              ? 'bg-accent/15 text-accent'
+              : 'bg-surface text-muted border border-line')
+          }
+        >
+          {badge}
+        </span>
+      )}
+    </button>
   );
 }
