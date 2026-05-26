@@ -1,0 +1,245 @@
+import { useEffect, useRef, useState, useMemo } from 'react';
+import type { UniversityData } from '../lib/types';
+
+interface Props {
+  universities: UniversityData[];
+  activeId: string;
+  onSelect: (id: string) => void;
+}
+
+function shortLabel(name: string): string {
+  return name.split(',')[0];
+}
+
+function scoreOf(u: UniversityData): { total: number | null; grade: string } {
+  const row = u.frictionScore?.[0];
+  if (!row) return { total: null, grade: '' };
+  return { total: row.total_score ?? null, grade: row.grade ?? '' };
+}
+
+function gradeColors(grade: string): string {
+  const g = grade.toLowerCase();
+  if (g === 'poor') return 'bg-bad/15 text-bad2 border-bad/30';
+  if (g === 'fair') return 'bg-warn/15 text-warn2 border-warn/30';
+  if (g === 'good') return 'bg-good/15 text-good2 border-good/30';
+  if (g === 'excellent') return 'bg-good/20 text-good2 border-good/40';
+  return 'bg-surface text-muted border-line';
+}
+
+const Chevron = ({ open }: { open: boolean }) => (
+  <svg
+    width={14}
+    height={14}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={
+      'transition-transform duration-150 ' + (open ? 'rotate-180' : '')
+    }
+  >
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
+const SearchIcon = () => (
+  <svg
+    width={14}
+    height={14}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx={11} cy={11} r={7} />
+    <path d="M21 21l-4.3-4.3" />
+  </svg>
+);
+
+export default function UniversitySelector({ universities, activeId, onSelect }: Props) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const active = universities.find((u) => u.id === activeId) ?? universities[0];
+
+  // Sort by friction score descending (highest friction first — matches the
+  // pitch deck flow where most-broken universities lead).
+  const sorted = useMemo(() => {
+    return [...universities].sort((a, b) => {
+      const sa = scoreOf(a).total ?? -1;
+      const sb = scoreOf(b).total ?? -1;
+      return sb - sa;
+    });
+  }, [universities]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return sorted;
+    return sorted.filter((u) => u.name.toLowerCase().includes(q));
+  }, [sorted, query]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(e: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery('');
+      }
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        setQuery('');
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (open) {
+      const t = setTimeout(() => inputRef.current?.focus(), 0);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
+  const activeScore = scoreOf(active);
+
+  return (
+    <div ref={rootRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className={
+          'group flex items-center gap-2.5 pl-3 pr-2.5 py-2 rounded-md border bg-surface/60 ' +
+          'hover:bg-surface hover:border-line2 transition ' +
+          (open ? 'border-accent/60 ring-1 ring-accent/20' : 'border-line')
+        }
+      >
+        <span className="text-[10px] uppercase tracking-[0.18em] text-muted font-semibold">
+          University
+        </span>
+        <span className="h-3.5 w-px bg-line" />
+        <span className="text-[13px] font-semibold tracking-tight text-ink">
+          {shortLabel(active.name)}
+        </span>
+        {activeScore.total !== null && (
+          <span
+            className={
+              'text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums ' +
+              gradeColors(activeScore.grade)
+            }
+          >
+            {activeScore.total}
+          </span>
+        )}
+        <span className="text-muted ml-0.5">
+          <Chevron open={open} />
+        </span>
+      </button>
+
+      {open && (
+        <div
+          className="absolute z-40 mt-2 w-[360px] rounded-lg border border-line bg-bg shadow-2xl overflow-hidden"
+          role="listbox"
+        >
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-line bg-surface/60">
+            <span className="text-muted"><SearchIcon /></span>
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={`Search ${universities.length} universities…`}
+              className="flex-1 bg-transparent outline-none text-[13px] text-ink placeholder:text-muted"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="text-[10px] text-muted hover:text-ink2 transition"
+              >
+                clear
+              </button>
+            )}
+          </div>
+
+          <div className="max-h-[60vh] overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <div className="px-3 py-6 text-[12px] text-muted text-center">
+                No universities match "{query}"
+              </div>
+            ) : (
+              filtered.map((u) => {
+                const isActive = u.id === active.id;
+                const { total, grade } = scoreOf(u);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => {
+                      onSelect(u.id);
+                      setOpen(false);
+                      setQuery('');
+                    }}
+                    role="option"
+                    aria-selected={isActive}
+                    className={
+                      'w-full flex items-center gap-3 px-3 py-2 text-left transition ' +
+                      (isActive
+                        ? 'bg-accent/10 text-ink'
+                        : 'text-ink2 hover:bg-surface')
+                    }
+                  >
+                    <span
+                      className={
+                        'flex-1 text-[12.5px] tracking-tight truncate ' +
+                        (isActive ? 'font-semibold text-ink' : 'font-medium')
+                      }
+                    >
+                      {u.name}
+                    </span>
+                    {total !== null && (
+                      <span
+                        className={
+                          'text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums ' +
+                          gradeColors(grade)
+                        }
+                      >
+                        {total}
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          <div className="px-3 py-2 border-t border-line bg-surface/40 flex items-center justify-between text-[10px] text-muted">
+            <span>
+              {filtered.length} of {universities.length}
+            </span>
+            <span className="tabular-nums">sorted by friction · ↓</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

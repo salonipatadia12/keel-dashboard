@@ -14,6 +14,7 @@ import MetricCards from './components/MetricCards';
 import TreePanel from './components/TreePanel';
 import BrandImpact from './components/BrandImpact';
 import Pitch from './components/Pitch';
+import UniversitySelector from './components/UniversitySelector';
 import { Activity } from './components/Icons';
 
 const data = raw as unknown as RawData;
@@ -159,27 +160,17 @@ export default function App() {
       />
 
       <main className="max-w-[1440px] mx-auto px-8 py-7">
-        {/* University tab strip — shown when more than one university is loaded */}
+        {/* University selector — dropdown with search, sorted by friction */}
         {universities.length > 1 && (
-          <div className="mb-6 border-b border-line flex items-end gap-1">
-            {universities.map((u) => {
-              const isActive = u.id === active.id;
-              return (
-                <button
-                  key={u.id}
-                  type="button"
-                  onClick={() => setActiveId(u.id)}
-                  className={
-                    'px-4 py-2.5 text-[12px] font-semibold tracking-tight border-b-2 transition ' +
-                    (isActive
-                      ? 'text-ink border-accent'
-                      : 'text-muted border-transparent hover:text-ink2 hover:border-line2')
-                  }
-                >
-                  {shortLabel(u.name)}
-                </button>
-              );
-            })}
+          <div className="mb-5 flex items-center justify-between">
+            <UniversitySelector
+              universities={universities}
+              activeId={active.id}
+              onSelect={setActiveId}
+            />
+            <div className="text-[10px] uppercase tracking-[0.18em] text-muted font-semibold">
+              {universities.length} universities audited
+            </div>
           </div>
         )}
 
