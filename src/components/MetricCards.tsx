@@ -61,7 +61,7 @@ export default function MetricCards({
   const todayWaitCaption = current.queueOnly
     ? '100% on hold'
     : todayWait >= 60
-      ? 'on hold plus menu nav'
+      ? 'hold + menu'
       : 'on the line';
 
   return (
@@ -100,7 +100,7 @@ export default function MetricCards({
           icon={<Phone size={14} />}
           label="Wait Time"
           today={{ value: fmtDuration(todayWait), caption: todayWaitCaption }}
-          ivr={{ value: fmtDuration(ivrWait), caption: 'menu plus route' }}
+          ivr={{ value: fmtDuration(ivrWait), caption: 'menu + route' }}
           voice={{ value: fmtDuration(voiceWait), caption: 'instant intent' }}
           delta={{ value: `${fmtDuration(waitDelta)} saved`, tone: 'good' }}
           emphasis

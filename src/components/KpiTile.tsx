@@ -48,15 +48,19 @@ function Cell({
         ? 'text-accent/80 font-medium'
         : 'text-good font-medium';
   return (
-    <div className={`rounded-lg border px-3 py-2.5 ${cls}`}>
+    <div className={`rounded-lg border px-2 py-2 ${cls} flex flex-col h-full`}>
       <div
-        className={`text-[9px] uppercase tracking-wider font-semibold mb-1 ${captionCls}`}
+        className={`text-[8px] uppercase tracking-wider font-semibold mb-1 ${captionCls} whitespace-nowrap`}
       >
         {labels[tier]}
       </div>
-      <div className="text-2xl font-bold tabular-nums leading-none text-ink">{value}</div>
+      <div className="text-lg font-bold tabular-nums leading-none text-ink whitespace-nowrap">{value}</div>
       {caption && (
-        <div className={`text-[10px] mt-1.5 leading-tight ${captionCls}`}>{caption}</div>
+        <div
+          className={`text-[8px] mt-1.5 leading-tight ${captionCls} whitespace-nowrap`}
+        >
+          {caption}
+        </div>
       )}
     </div>
   );
@@ -87,7 +91,7 @@ export default function KpiTile({
     <div
       className={`rounded-xl bg-surface ${
         emphasis ? 'border-2 border-ink shadow-card' : 'border border-line shadow-card'
-      } p-4 group hover:border-line2 transition`}
+      } p-4 h-full flex flex-col group hover:border-line2 transition`}
     >
       <div className="flex items-center gap-2 mb-3">
         {icon && (
@@ -107,7 +111,7 @@ export default function KpiTile({
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-1.5 items-center relative">
+      <div className="grid grid-cols-3 gap-1.5 items-stretch relative">
         <Cell tier="today" tone="today" value={today.value} caption={today.caption} />
         <Cell tier="ivr" tone="mid" value={ivr.value} caption={ivr.caption} />
         <Cell tier="voice" tone="best" value={voice.value} caption={voice.caption} />
