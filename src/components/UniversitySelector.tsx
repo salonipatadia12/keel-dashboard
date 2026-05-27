@@ -5,16 +5,20 @@ interface Props {
   universities: UniversityData[];
   activeId: string;
   onSelect: (id: string) => void;
+  scoresById: Record<string, { total: number; grade: string }>;
 }
 
 function shortLabel(name: string): string {
   return name.split(',')[0];
 }
 
-function scoreOf(u: UniversityData): { total: number | null; grade: string } {
-  const row = u.frictionScore?.[0];
-  if (!row) return { total: null, grade: '' };
-  return { total: row.total_score ?? null, grade: row.grade ?? '' };
+function scoreOf(
+  u: UniversityData,
+  scoresById: Record<string, { total: number; grade: string }>
+): { total: number | null; grade: string } {
+  const score = scoresById[u.id];
+  if (!score) return { total: null, grade: '' };
+  return score;
 }
 
 function gradeColors(grade: string): string {
@@ -60,7 +64,12 @@ const SearchIcon = () => (
   </svg>
 );
 
-export default function UniversitySelector({ universities, activeId, onSelect }: Props) {
+export default function UniversitySelector({
+  universities,
+  activeId,
+  onSelect,
+  scoresById,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
@@ -72,11 +81,11 @@ export default function UniversitySelector({ universities, activeId, onSelect }:
   // pitch deck flow where most-broken universities lead).
   const sorted = useMemo(() => {
     return [...universities].sort((a, b) => {
-      const sa = scoreOf(a).total ?? -1;
-      const sb = scoreOf(b).total ?? -1;
+      const sa = scoreOf(a, scoresById).total ?? -1;
+      const sb = scoreOf(b, scoresById).total ?? -1;
       return sb - sa;
     });
-  }, [universities]);
+  }, [universities, scoresById]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -118,7 +127,7 @@ export default function UniversitySelector({ universities, activeId, onSelect }:
     }
   }, [open]);
 
-  const activeScore = scoreOf(active);
+  const activeScore = scoreOf(active, scoresById);
 
   return (
     <div ref={rootRef} className="relative inline-block">
@@ -189,7 +198,7 @@ export default function UniversitySelector({ universities, activeId, onSelect }:
             ) : (
               filtered.map((u) => {
                 const isActive = u.id === active.id;
-                const { total, grade } = scoreOf(u);
+                const { total, grade } = scoreOf(u, scoresById);
                 return (
                   <button
                     key={u.id}

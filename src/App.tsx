@@ -77,9 +77,7 @@ function buildView(uni: UniversityData) {
     realLeaves.length === 0 ||
     (realLeaves.length === 1 && realLeaves[0].outcomeType === 'human');
 
-  const sheetRow = uni.frictionScore.find(
-    (r) => r.university === universityName
-  );
+  const sheetRow = uni.frictionScore[0];
   const currentFriction = sheetRow
     ? frictionFromSheet(sheetRow)
     : calculateFriction(built.root, {
@@ -148,6 +146,14 @@ export default function App() {
       };
     });
   }, [universities]);
+  const selectorScoresById = useMemo(() => {
+    return Object.fromEntries(
+      cohortRows.map((r) => [
+        r.id,
+        { total: r.currentScore, grade: r.grade },
+      ])
+    );
+  }, [cohortRows]);
 
   const {
     universityName,
@@ -209,6 +215,7 @@ export default function App() {
               universities={universities}
               activeId={active.id}
               onSelect={setActiveId}
+              scoresById={selectorScoresById}
             />
           </div>
         )}
