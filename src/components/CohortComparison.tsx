@@ -6,6 +6,7 @@ export interface CohortRow {
   currentScore: number;
   voiceAgentScore: number;
   grade: string;
+  hasNoIvr?: boolean;
 }
 
 interface Props {
@@ -28,12 +29,26 @@ function gradeColors(grade: string): { bg: string; text: string; border: string 
 }
 
 export default function CohortComparison({ rows, activeId, onSelect }: Props) {
-  // Sort by current friction descending (worst first — matches pitch narrative).
-  const sorted = [...rows].sort((a, b) => b.currentScore - a.currentScore);
+  // Split universities with no IVR out — they aren't comparable to the
+  // friction-scored cohort and would skew the averages downward. They get
+  // their own grouped section below the ranked bars.
+  const ivrRows = rows.filter((r) => !r.hasNoIvr);
+  const noIvrRows = rows.filter((r) => r.hasNoIvr);
 
-  // Cohort stats for the summary line.
-  const avgCurrent = sorted.reduce((s, r) => s + r.currentScore, 0) / sorted.length;
-  const avgVoice = sorted.reduce((s, r) => s + r.voiceAgentScore, 0) / sorted.length;
+  // Sort by current friction descending (worst first — matches pitch narrative).
+  const sorted = [...ivrRows].sort((a, b) => b.currentScore - a.currentScore);
+
+  // Cohort stats for the summary line. Computed across the scored cohort
+  // only so a uni with no IVR doesn't pull the averages down with a
+  // calculated-from-empty-tree score.
+  const avgCurrent =
+    sorted.length > 0
+      ? sorted.reduce((s, r) => s + r.currentScore, 0) / sorted.length
+      : 0;
+  const avgVoice =
+    sorted.length > 0
+      ? sorted.reduce((s, r) => s + r.voiceAgentScore, 0) / sorted.length
+      : 0;
   const avgDrop = avgCurrent - avgVoice;
   const activeRow = sorted.find((r) => r.id === activeId);
   const activeRank = activeRow
@@ -61,13 +76,14 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
             Cohort comparison · {rows.length} universities audited
           </h2>
           <p className="text-[15px] text-muted leading-snug max-w-2xl">
-            Every university we have audited lands in the friction-heavy band.
-            The gap between today's IVR and a voice agent is consistently
-            50-70 points — the problem and the fix are the same shape across
-            the cohort.
+            {sorted.length} of {rows.length} universities run an IVR — the
+            scored cohort lands consistently in the friction-heavy band, with
+            a 50-70 point gap between today's IVR and a voice agent.{' '}
+            {noIvrRows.length > 0 &&
+              `The remaining ${noIvrRows.length} route calls straight to a person (or that person's voicemail) — no IVR to score.`}
           </p>
         </div>
-        {activeRow && activeRank && (
+        {activeRow && activeRank ? (
           <div className="text-right">
             <div className="text-[12px] uppercase tracking-[0.16em] text-muted font-semibold mb-1.5">
               {shortLabel(activeRow.name)} ranks
@@ -75,10 +91,25 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
             <div className="text-4xl font-semibold text-ink tabular-nums leading-none">
               #{activeRank}
               <span className="text-[16px] text-muted ml-1.5 font-normal">
-                of {rows.length}
+                of {sorted.length}
               </span>
             </div>
           </div>
+        ) : (
+          (() => {
+            const noIvrActive = noIvrRows.find((r) => r.id === activeId);
+            if (!noIvrActive) return null;
+            return (
+              <div className="text-right">
+                <div className="text-[12px] uppercase tracking-[0.16em] text-muted font-semibold mb-1.5">
+                  {shortLabel(noIvrActive.name)}
+                </div>
+                <div className="text-[15px] font-semibold text-muted2 leading-none">
+                  No IVR — not ranked
+                </div>
+              </div>
+            );
+          })()
         )}
       </div>
 
@@ -192,6 +223,67 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
           );
         })}
       </div>
+
+      {noIvrRows.length > 0 && (
+        <div className="mt-6">
+          <div className="flex items-center gap-2 mb-2 pl-2">
+            <span className="text-[11px] uppercase tracking-[0.16em] text-muted font-semibold">
+              Not ranked · No IVR
+            </span>
+            <span className="text-[11px] text-muted2">
+              {noIvrRows.length}{' '}
+              {noIvrRows.length === 1 ? 'line goes' : 'lines go'} straight to
+              a person (or that person's voicemail)
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            {noIvrRows.map((r) => {
+              const isActive = r.id === activeId;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => onSelect(r.id)}
+                  className={
+                    'w-full grid grid-cols-[240px_1fr_80px] gap-4 items-center px-3 py-2.5 rounded-md text-left transition ' +
+                    (isActive
+                      ? 'bg-accent/10 ring-1 ring-accent/40'
+                      : 'hover:bg-bg/60')
+                  }
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className={
+                        'text-[15px] tracking-tight truncate ' +
+                        (isActive
+                          ? 'font-semibold text-ink'
+                          : 'font-medium text-ink2')
+                      }
+                      title={r.name}
+                    >
+                      {shortLabel(r.name)}
+                    </span>
+                    {isActive && (
+                      <span className="text-[10px] uppercase tracking-[0.14em] text-accent font-bold shrink-0">
+                        you
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-9 rounded-md bg-bg/40 border border-dashed border-line flex items-center px-3 text-[12.5px] text-muted2">
+                    No IVR detected — calls connect directly to a person
+                    (voicemail when unavailable)
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded border bg-surface text-muted2 border-line2">
+                      No IVR
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-5 pt-4 border-t border-line text-[13px] text-muted flex items-center justify-between flex-wrap gap-2">
         <span>

@@ -20,6 +20,13 @@ import { Activity } from './components/Icons';
 
 const data = raw as unknown as RawData;
 
+// Universities Saloni has confirmed by manual call have no IVR at all —
+// calls route straight to a person (or that person's voicemail when
+// unavailable). The friction score doesn't apply to these lines; the
+// dashboard surfaces them with a distinct "No IVR" label instead of a
+// misleading friction number.
+const NO_IVR_IDS = new Set<string>(['northwestern', 'loyola-chicago']);
+
 function treeHeight(maxDepth: number): number {
   const levels = maxDepth + 1;
   return Math.max(360, levels * 92 + maxDepth * 64 + 80);
@@ -143,6 +150,7 @@ export default function App() {
         currentScore: v.currentFriction.totalScore,
         voiceAgentScore: v.voiceAgent.friction.totalScore,
         grade: v.currentFriction.grade,
+        hasNoIvr: NO_IVR_IDS.has(u.id),
       };
     });
   }, [universities]);
@@ -150,10 +158,11 @@ export default function App() {
     return Object.fromEntries(
       cohortRows.map((r) => [
         r.id,
-        { total: r.currentScore, grade: r.grade },
+        { total: r.currentScore, grade: r.grade, hasNoIvr: !!r.hasNoIvr },
       ])
     );
   }, [cohortRows]);
+  const activeHasNoIvr = NO_IVR_IDS.has(active.id);
 
   const {
     universityName,
@@ -261,6 +270,24 @@ export default function App() {
             </span>
           </div>
         </div>
+
+        {/* No-IVR banner — surfaced above the KPI strip so it's obvious the
+            friction score below is computed against an empty IVR, not a real
+            menu. */}
+        {activeHasNoIvr && (
+          <div className="mb-5 rounded-xl border border-line2 bg-surface2/40 px-4 py-3 flex items-start gap-3">
+            <div className="w-7 h-7 rounded-md bg-bg border border-line flex items-center justify-center text-muted shrink-0 mt-0.5">
+              <Activity size={13} />
+            </div>
+            <div className="text-[13px] leading-snug text-ink2">
+              <span className="font-semibold text-ink">No IVR on this line.</span>{' '}
+              Calls route straight to a person — and to that person's voicemail
+              when they're away. There's no menu, no self-service path, and no
+              after-hours coverage. The KPIs below show the lift an IVR or
+              voice agent would deliver versus today's direct-to-human pattern.
+            </div>
+          </div>
+        )}
 
         {/* KPI strip */}
         <div className="mb-8">

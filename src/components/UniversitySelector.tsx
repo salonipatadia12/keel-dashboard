@@ -5,7 +5,10 @@ interface Props {
   universities: UniversityData[];
   activeId: string;
   onSelect: (id: string) => void;
-  scoresById: Record<string, { total: number; grade: string }>;
+  scoresById: Record<
+    string,
+    { total: number; grade: string; hasNoIvr?: boolean }
+  >;
 }
 
 function shortLabel(name: string): string {
@@ -14,11 +17,14 @@ function shortLabel(name: string): string {
 
 function scoreOf(
   u: UniversityData,
-  scoresById: Record<string, { total: number; grade: string }>
-): { total: number | null; grade: string } {
+  scoresById: Record<
+    string,
+    { total: number; grade: string; hasNoIvr?: boolean }
+  >
+): { total: number | null; grade: string; hasNoIvr: boolean } {
   const score = scoresById[u.id];
-  if (!score) return { total: null, grade: '' };
-  return score;
+  if (!score) return { total: null, grade: '', hasNoIvr: false };
+  return { ...score, hasNoIvr: !!score.hasNoIvr };
 }
 
 function gradeColors(grade: string): string {
@@ -149,15 +155,24 @@ export default function UniversitySelector({
         <span className="text-[13px] font-semibold tracking-tight text-ink">
           {shortLabel(active.name)}
         </span>
-        {activeScore.total !== null && (
+        {activeScore.hasNoIvr ? (
           <span
-            className={
-              'text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums ' +
-              gradeColors(activeScore.grade)
-            }
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider bg-surface text-muted2 border-line2"
+            title="No IVR — calls route directly to a person or voicemail"
           >
-            {activeScore.total}
+            No IVR
           </span>
+        ) : (
+          activeScore.total !== null && (
+            <span
+              className={
+                'text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums ' +
+                gradeColors(activeScore.grade)
+              }
+            >
+              {activeScore.total}
+            </span>
+          )
         )}
         <span className="text-muted ml-0.5">
           <Chevron open={open} />
@@ -198,7 +213,7 @@ export default function UniversitySelector({
             ) : (
               filtered.map((u) => {
                 const isActive = u.id === active.id;
-                const { total, grade } = scoreOf(u, scoresById);
+                const { total, grade, hasNoIvr } = scoreOf(u, scoresById);
                 return (
                   <button
                     key={u.id}
@@ -225,7 +240,13 @@ export default function UniversitySelector({
                     >
                       {u.name}
                     </span>
-                    {total !== null && (
+                    {hasNoIvr ? (
+                      <span
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider bg-surface text-muted2 border-line2"
+                      >
+                        No IVR
+                      </span>
+                    ) : total !== null && (
                       <span
                         className={
                           'text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums ' +
