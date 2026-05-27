@@ -105,6 +105,9 @@ export interface UniversityData {
   source: string;
   name: string;
   phone: string;
+  // Workspace bucket this tenant belongs to (e.g. 'universities',
+  // 'k12-districts'). Lets one deployed app host multiple audit verticals.
+  workspace: string;
   universityList: UniversityListRow[];
   overview: OverviewRow[];
   menuMapping: MenuItemRow[];
@@ -115,9 +118,18 @@ export interface UniversityData {
   discoveryQueue: unknown[];
 }
 
+export interface Workspace {
+  id: string;
+  label: string;
+  // Short caption shown on the report page subtitle. Lets each vertical
+  // describe its caller audience accurately (students vs. families).
+  audienceCaption: string;
+}
+
 export interface RawData {
   source: string;
   generatedAt: string;
+  workspaces: Workspace[];
   universities: UniversityData[];
 }
 

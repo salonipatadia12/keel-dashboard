@@ -127,20 +127,62 @@ function shortLabel(name: string): string {
 
 type Page = 'report' | 'rankings';
 
+const FALLBACK_WORKSPACES = [
+  {
+    id: 'universities',
+    label: 'University audits',
+    audienceCaption:
+      'Every caller-facing path on your line, scored on the friction a real caller experiences.',
+  },
+];
+
 export default function App() {
-  const universities = data.universities;
+  const allTenants = data.universities;
+  const workspaces =
+    data.workspaces && data.workspaces.length > 0
+      ? data.workspaces
+      : FALLBACK_WORKSPACES;
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState(
+    workspaces[0]?.id ?? 'universities'
+  );
+  const activeWorkspace =
+    workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0];
+  const universities = useMemo(
+    () => allTenants.filter((u) => (u.workspace ?? 'universities') === activeWorkspaceId),
+    [allTenants, activeWorkspaceId]
+  );
+
   const [activeId, setActiveId] = useState(
     universities[0]?.id ?? 'unknown'
   );
   const [page, setPage] = useState<Page>('report');
+
+  // Whenever the workspace changes, snap activeId back to the first tenant
+  // in that workspace so the report below is always valid.
+  const firstInWorkspace = universities[0]?.id ?? 'unknown';
+  if (
+    universities.length > 0 &&
+    !universities.find((u) => u.id === activeId)
+  ) {
+    // running this during render is fine — state setter call is queued and
+    // re-renders without an extra effect.
+    setActiveId(firstInWorkspace);
+  }
+  // Workspaces with a single tenant don't have a Rankings page (cohort
+  // comparison needs more than one row). If the user lands on Rankings then
+  // switches into such a workspace, snap back to Report.
+  if (page === 'rankings' && universities.length <= 1) {
+    setPage('report');
+  }
   const active =
     universities.find((u) => u.id === activeId) ?? universities[0];
 
   const view = useMemo(() => buildView(active), [active]);
 
-  // Compute current + voice-agent friction for every university in the cohort
-  // so the comparison panel can show all rows side by side. Cheap because
-  // friction calc is in-memory tree work — done once per page load.
+  // Compute current + voice-agent friction for every tenant in the active
+  // workspace so the comparison panel can show all rows side by side.
+  // Cheap because friction calc is in-memory tree work — done once per
+  // page load.
   const cohortRows = useMemo<CohortRow[]>(() => {
     return universities.map((u) => {
       const v = buildView(u);
@@ -192,6 +234,12 @@ export default function App() {
         university={universityName}
         phone={phone}
         generatedAt={data.generatedAt}
+        workspaces={workspaces}
+        activeWorkspaceId={activeWorkspace.id}
+        onSelectWorkspace={(id) => {
+          setActiveWorkspaceId(id);
+          setPage('report');
+        }}
       />
 
       <main className="max-w-[1440px] mx-auto px-8 py-7">
@@ -199,19 +247,22 @@ export default function App() {
         <div className="mb-6 flex items-center justify-between border-b border-line">
           <nav className="flex items-end gap-2">
             <PageTab
-              label="University report"
+              label="Report"
               active={page === 'report'}
               onClick={() => setPage('report')}
             />
-            <PageTab
-              label="Rankings"
-              active={page === 'rankings'}
-              onClick={() => setPage('rankings')}
-              badge={universities.length}
-            />
+            {universities.length > 1 && (
+              <PageTab
+                label="Rankings"
+                active={page === 'rankings'}
+                onClick={() => setPage('rankings')}
+                badge={universities.length}
+              />
+            )}
           </nav>
           <div className="pb-3 text-[12px] uppercase tracking-[0.18em] text-muted font-semibold">
-            {universities.length} universities audited
+            {universities.length}{' '}
+            {universities.length === 1 ? 'tenant' : 'tenants'} audited
           </div>
         </div>
 
@@ -242,9 +293,8 @@ export default function App() {
               {universityName}
             </h1>
             <p className="text-sm text-muted mt-2 max-w-2xl leading-snug">
-              Every caller facing path on your line, scored on the friction a
-              real caller experiences. Wait time, business hours dependency,
-              menu listening, and prompt clarity.
+              {activeWorkspace.audienceCaption} Wait time, business hours
+              dependency, menu listening, and prompt clarity.
             </p>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-muted">

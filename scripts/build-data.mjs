@@ -1,4 +1,4 @@
-// Reads each xlsx in SOURCES and produces a multi-university src/data.json.
+// Reads each xlsx in SOURCES and produces a multi-tenant src/data.json.
 // Runs automatically before `npm run dev` and `npm run build`.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -7,37 +7,62 @@ import XLSX from 'xlsx';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Each entry is one university workspace. Filenames are looked up first in
-// the parent folder's output_universities/ (local dev), then the parent folder
-// itself (legacy), then the pitch repo itself (CI).
+// Workspaces group tenants by vertical so one deployed dashboard can host
+// multiple audit types (universities, K-12 districts, etc.). The first
+// workspace is the default landing view.
+const WORKSPACES = [
+  {
+    id: 'universities',
+    label: 'University audits',
+    audienceCaption:
+      'Every caller-facing path on your line, scored on the friction a real caller experiences.',
+  },
+  {
+    id: 'k12-districts',
+    label: 'K-12 district audits',
+    audienceCaption:
+      'Every caller-facing path on the main district line, scored on the friction a real family experiences.',
+  },
+];
+
+// Each entry is one audited tenant. `workspace` slots it under one of the
+// WORKSPACES above. `displayName` overrides the raw university string from
+// the xlsx — used when the source file has an ugly title (e.g.
+// "Torrance_united school district").
 const SOURCES = [
-  { id: 'csu-sacramento', file: 'IVR_CSU_Sacramento.xlsx' },
-  { id: 'sjsu', file: 'IVR_San_Jose.xlsx' },
-  { id: 'santa-clara', file: 'IVR_Santa_Clara.xlsx' },
-  { id: 'uc-berkeley', file: 'IVR_UC_Berkeley.xlsx' },
-  { id: 'uc-davis', file: 'IVR_UC_Davis.xlsx' },
-  { id: 'uc-irvine', file: 'IVR_UC_Irvine.xlsx' },
-  { id: 'uc-san-diego', file: 'IVR_UC_San_Diego.xlsx' },
-  { id: 'ucla', file: 'IVR_UCLA.xlsx' },
-  { id: 'sdsu', file: 'IVR_SDSU.xlsx' },
-  { id: 'csulb', file: 'IVR_Cal_State_Long_Beach.xlsx' },
-  { id: 'iu-indianapolis', file: 'IVR_Indiana_Indianapolis.xlsx' },
-  { id: 'usc', file: 'IVR_USC.xlsx' },
-  { id: 'stanford', file: 'IVR_Stanford.xlsx' },
-  { id: 'iu-bloomington', file: 'IVR_Indiana_Bloomington.xlsx' },
-  { id: 'csun', file: 'IVR_Cal_State_Northridge.xlsx' },
-  { id: 'calstate-la', file: 'IVR_CSU_Los_Angeles.xlsx' },
-  { id: 'csuf', file: 'IVR_Cal_State_Fullerton.xlsx' },
-  { id: 'uiuc', file: 'IVR_UIUC.xlsx' },
-  { id: 'illinois-state', file: 'IVR_Illinois_State.xlsx' },
-  { id: 'ball-state', file: 'IVR_Ball_State.xlsx' },
-  { id: 'notre-dame', file: 'IVR_Notre_Dame.xlsx' },
-  { id: 'northern-illinois', file: 'IVR_Northern_Illinois.xlsx' },
-  { id: 'depaul', file: 'IVR_DePaul.xlsx' },
-  { id: 'loyola-chicago', file: 'IVR_Loyola_Chicago.xlsx' },
-  { id: 'uic', file: 'IVR_UIC.xlsx' },
-  { id: 'northwestern', file: 'IVR_Northwestern.xlsx' },
-  { id: 'uchicago', file: 'IVR_UChicago.xlsx' },
+  { id: 'csu-sacramento', file: 'IVR_CSU_Sacramento.xlsx', workspace: 'universities' },
+  { id: 'sjsu', file: 'IVR_San_Jose.xlsx', workspace: 'universities' },
+  { id: 'santa-clara', file: 'IVR_Santa_Clara.xlsx', workspace: 'universities' },
+  { id: 'uc-berkeley', file: 'IVR_UC_Berkeley.xlsx', workspace: 'universities' },
+  { id: 'uc-davis', file: 'IVR_UC_Davis.xlsx', workspace: 'universities' },
+  { id: 'uc-irvine', file: 'IVR_UC_Irvine.xlsx', workspace: 'universities' },
+  { id: 'uc-san-diego', file: 'IVR_UC_San_Diego.xlsx', workspace: 'universities' },
+  { id: 'ucla', file: 'IVR_UCLA.xlsx', workspace: 'universities' },
+  { id: 'sdsu', file: 'IVR_SDSU.xlsx', workspace: 'universities' },
+  { id: 'csulb', file: 'IVR_Cal_State_Long_Beach.xlsx', workspace: 'universities' },
+  { id: 'iu-indianapolis', file: 'IVR_Indiana_Indianapolis.xlsx', workspace: 'universities' },
+  { id: 'usc', file: 'IVR_USC.xlsx', workspace: 'universities' },
+  { id: 'stanford', file: 'IVR_Stanford.xlsx', workspace: 'universities' },
+  { id: 'iu-bloomington', file: 'IVR_Indiana_Bloomington.xlsx', workspace: 'universities' },
+  { id: 'csun', file: 'IVR_Cal_State_Northridge.xlsx', workspace: 'universities' },
+  { id: 'calstate-la', file: 'IVR_CSU_Los_Angeles.xlsx', workspace: 'universities' },
+  { id: 'csuf', file: 'IVR_Cal_State_Fullerton.xlsx', workspace: 'universities' },
+  { id: 'uiuc', file: 'IVR_UIUC.xlsx', workspace: 'universities' },
+  { id: 'illinois-state', file: 'IVR_Illinois_State.xlsx', workspace: 'universities' },
+  { id: 'ball-state', file: 'IVR_Ball_State.xlsx', workspace: 'universities' },
+  { id: 'notre-dame', file: 'IVR_Notre_Dame.xlsx', workspace: 'universities' },
+  { id: 'northern-illinois', file: 'IVR_Northern_Illinois.xlsx', workspace: 'universities' },
+  { id: 'depaul', file: 'IVR_DePaul.xlsx', workspace: 'universities' },
+  { id: 'loyola-chicago', file: 'IVR_Loyola_Chicago.xlsx', workspace: 'universities' },
+  { id: 'uic', file: 'IVR_UIC.xlsx', workspace: 'universities' },
+  { id: 'northwestern', file: 'IVR_Northwestern.xlsx', workspace: 'universities' },
+  { id: 'uchicago', file: 'IVR_UChicago.xlsx', workspace: 'universities' },
+  {
+    id: 'tusd',
+    file: 'IVR_Torrance_USD.xlsx',
+    workspace: 'k12-districts',
+    displayName: 'Torrance Unified School District',
+  },
 ];
 
 function findFile(filename) {
@@ -49,7 +74,7 @@ function findFile(filename) {
   return candidates.find(existsSync);
 }
 
-function parseSource({ id, file }) {
+function parseSource({ id, file, workspace, displayName }) {
   const path = findFile(file);
   if (!path) {
     console.warn(`build-data: ${file} not found, skipping`);
@@ -63,19 +88,31 @@ function parseSource({ id, file }) {
   }
   const universityList = sheets['University List'] || [];
   const uni = universityList[0] || {};
+  const rawName = uni.university || 'Unknown';
+  const name = displayName || rawName;
+
+  // Most sheets join back to the tenant by `row.university === uni.name`.
+  // When we override the display name we have to rewrite that key on every
+  // row so downstream filters keep matching.
+  const rewriteJoin = (rows) =>
+    rows.map((r) =>
+      r && r.university === rawName ? { ...r, university: name } : r
+    );
+
   return {
     id,
     source: file,
-    name: uni.university || 'Unknown',
+    workspace: workspace || 'universities',
+    name,
     phone: uni.phone ? String(uni.phone) : '',
-    universityList,
-    overview: sheets['Overview'] || [],
-    menuMapping: sheets['Menu Mapping'] || [],
-    scriptCapture: sheets['Script Capture'] || [],
-    systemCharacteristics: sheets['System Characteristics'] || [],
-    tone: sheets['Tone'] || [],
-    frictionScore: sheets['Friction Score'] || [],
-    discoveryQueue: sheets['DiscoveryQueue'] || [],
+    universityList: rewriteJoin(universityList),
+    overview: rewriteJoin(sheets['Overview'] || []),
+    menuMapping: rewriteJoin(sheets['Menu Mapping'] || []),
+    scriptCapture: rewriteJoin(sheets['Script Capture'] || []),
+    systemCharacteristics: rewriteJoin(sheets['System Characteristics'] || []),
+    tone: rewriteJoin(sheets['Tone'] || []),
+    frictionScore: rewriteJoin(sheets['Friction Score'] || []),
+    discoveryQueue: rewriteJoin(sheets['DiscoveryQueue'] || []),
   };
 }
 
@@ -94,13 +131,21 @@ if (universities.length === 0) {
 const out = {
   source: SOURCES.map((s) => s.file).join(', '),
   generatedAt: new Date().toISOString(),
+  workspaces: WORKSPACES,
   universities,
 };
 writeFileSync(dataJsonPath, JSON.stringify(out, null, 2));
+const byWorkspace = universities.reduce((acc, u) => {
+  (acc[u.workspace] = acc[u.workspace] || []).push(u);
+  return acc;
+}, {});
 console.log(
-  `build-data: wrote ${dataJsonPath} — ${universities.length} universities (` +
-    universities
-      .map((u) => `${u.name}: overview=${u.overview.length}`)
-      .join('; ') +
-    ')'
+  `build-data: wrote ${dataJsonPath} — ${universities.length} tenant(s) across ${Object.keys(byWorkspace).length} workspace(s):\n` +
+    Object.entries(byWorkspace)
+      .map(
+        ([ws, list]) =>
+          `  [${ws}] ${list.length}: ` +
+          list.map((u) => `${u.name} (menu=${u.menuMapping.length})`).join(', ')
+      )
+      .join('\n')
 );
