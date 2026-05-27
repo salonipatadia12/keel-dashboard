@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import type { Reference } from '../lib/types';
 import { ArrowRight } from './Icons';
+import { bandClasses, type Band } from '../lib/scoreColor';
 
 interface TierValue {
   value: string | number;
   caption?: string;
+  // Score-band color for this cell. Computed by MetricCards from the
+  // underlying number (friction score, coverage %, duration, etc.) using
+  // the shared lib/scoreColor helpers.
+  band: Band;
 }
 
 interface Props {
@@ -21,12 +26,12 @@ interface Props {
 
 function Cell({
   tier,
-  tone,
+  band,
   value,
   caption,
 }: {
   tier: 'today' | 'ivr' | 'voice';
-  tone: 'today' | 'mid' | 'best';
+  band: Band;
   value: string | number;
   caption?: string;
 }) {
@@ -35,29 +40,24 @@ function Cell({
     ivr: 'Optimized IVR',
     voice: 'Voice agent',
   };
-  const cls =
-    tone === 'today'
-      ? 'bg-surface2/60 border-line/70 text-muted2'
-      : tone === 'mid'
-        ? 'bg-accent/5 border-accent/20 text-accent'
-        : 'bg-gradient-to-br from-good/8 to-good/3 border-good/30 text-good';
-  const captionCls =
-    tone === 'today'
-      ? 'text-muted'
-      : tone === 'mid'
-        ? 'text-accent/80 font-medium'
-        : 'text-good font-medium';
+  const c = bandClasses(band);
   return (
-    <div className={`rounded-lg border px-2 py-2 ${cls} flex flex-col h-full`}>
+    <div
+      className={`rounded-lg border px-2 py-2 ${c.cellBg} ${c.cellBorder} flex flex-col h-full`}
+    >
       <div
-        className={`text-[8px] uppercase tracking-wider font-semibold mb-1 ${captionCls} whitespace-nowrap`}
+        className={`text-[8px] uppercase tracking-wider font-semibold mb-1 ${c.cellText} whitespace-nowrap`}
       >
         {labels[tier]}
       </div>
-      <div className="text-lg font-bold tabular-nums leading-none text-ink whitespace-nowrap">{value}</div>
+      <div
+        className={`text-lg font-bold tabular-nums leading-none whitespace-nowrap ${c.cellText}`}
+      >
+        {value}
+      </div>
       {caption && (
         <div
-          className={`text-[8px] mt-1.5 leading-tight ${captionCls} whitespace-nowrap`}
+          className={`text-[8px] mt-1.5 leading-tight whitespace-nowrap ${c.cellText} opacity-80`}
         >
           {caption}
         </div>
@@ -112,9 +112,24 @@ export default function KpiTile({
       </div>
 
       <div className="grid grid-cols-3 gap-1.5 items-stretch relative">
-        <Cell tier="today" tone="today" value={today.value} caption={today.caption} />
-        <Cell tier="ivr" tone="mid" value={ivr.value} caption={ivr.caption} />
-        <Cell tier="voice" tone="best" value={voice.value} caption={voice.caption} />
+        <Cell
+          tier="today"
+          band={today.band}
+          value={today.value}
+          caption={today.caption}
+        />
+        <Cell
+          tier="ivr"
+          band={ivr.band}
+          value={ivr.value}
+          caption={ivr.caption}
+        />
+        <Cell
+          tier="voice"
+          band={voice.band}
+          value={voice.value}
+          caption={voice.caption}
+        />
         {/* Connecting arrows */}
         <div className="absolute left-1/3 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-surface border border-line flex items-center justify-center text-muted2 z-10">
           <ArrowRight size={9} />

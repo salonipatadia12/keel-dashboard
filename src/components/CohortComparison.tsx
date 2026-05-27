@@ -1,4 +1,5 @@
 import type { FrictionResult } from '../lib/types';
+import { frictionClasses } from '../lib/scoreColor';
 
 export interface CohortRow {
   id: string;
@@ -19,13 +20,10 @@ function shortLabel(name: string): string {
   return name.split(',')[0];
 }
 
-function gradeColors(grade: string): { bg: string; text: string; border: string } {
-  const g = grade.toLowerCase();
-  if (g === 'poor') return { bg: 'bg-bad/15', text: 'text-bad2', border: 'border-bad/30' };
-  if (g === 'fair') return { bg: 'bg-warn/15', text: 'text-warn2', border: 'border-warn/30' };
-  if (g === 'good') return { bg: 'bg-good/15', text: 'text-good2', border: 'border-good/30' };
-  if (g === 'excellent') return { bg: 'bg-good/20', text: 'text-good2', border: 'border-good/40' };
-  return { bg: 'bg-surface', text: 'text-muted', border: 'border-line' };
+// Map friction score → shared band pill classes for the "Drop" badge.
+function dropBadgeClasses(score: number) {
+  const c = frictionClasses(score);
+  return { bg: c.pillBg, text: c.pillText, border: c.pillBorder };
 }
 
 export default function CohortComparison({ rows, activeId, onSelect }: Props) {
@@ -148,7 +146,11 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
         {sorted.map((r) => {
           const isActive = r.id === activeId;
           const drop = r.currentScore - r.voiceAgentScore;
-          const colors = gradeColors(r.grade);
+          const colors = dropBadgeClasses(r.currentScore);
+          // Bar fill bands the row by friction. Voice-agent overlay
+          // always uses the "best" band since projections land <20.
+          const currentBar = frictionClasses(r.currentScore);
+          const voiceBar = frictionClasses(r.voiceAgentScore);
 
           return (
             <button
@@ -184,18 +186,19 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
 
               {/* Bar */}
               <div className="relative h-9 rounded-md bg-bg/60 border border-line overflow-hidden">
-                {/* Current friction (red) */}
+                {/* Current friction — colored by band (red ≥80, pink, etc.) */}
                 <div
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-bad to-bad2/80 flex items-center justify-end pr-2.5"
+                  className={`absolute inset-y-0 left-0 ${currentBar.barFill} flex items-center justify-end pr-2.5`}
                   style={{ width: pct(r.currentScore) }}
                 >
                   <span className="text-[13px] font-bold text-white tabular-nums drop-shadow">
                     {r.currentScore}
                   </span>
                 </div>
-                {/* Voice agent friction (green) — overlaid at left */}
+                {/* Voice agent friction — overlaid at left, colored by its
+                    own band (almost always green at this scale). */}
                 <div
-                  className="absolute inset-y-0 left-0 bg-good flex items-center justify-end pr-2 border-r border-good2"
+                  className={`absolute inset-y-0 left-0 ${voiceBar.barFill} flex items-center justify-end pr-2`}
                   style={{ width: pct(r.voiceAgentScore) }}
                 >
                   <span className="text-[12px] font-bold text-white tabular-nums drop-shadow">

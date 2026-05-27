@@ -1,5 +1,6 @@
 import type { BrandIndex } from '../lib/brand';
 import { TrendingUp, Shield } from './Icons';
+import { brandClasses } from '../lib/scoreColor';
 
 interface Props {
   university: string;
@@ -11,59 +12,49 @@ interface Props {
   voiceAgentNarrative: string;
 }
 
-type Tone = 'now' | 'after' | 'best';
-
 function Card({
   title,
   index,
   narrative,
-  tone,
   tagline,
 }: {
   title: string;
   index: BrandIndex;
   narrative: string;
-  tone: Tone;
   tagline: string[];
 }) {
-  const cardCls =
-    tone === 'now'
-      ? 'bg-surface border-line'
-      : tone === 'after'
-        ? 'bg-gradient-to-br from-accent/5 via-surface to-surface border-accent/30'
-        : 'bg-gradient-to-br from-good/8 via-surface to-surface border-good/40';
-  const labelCls = tone === 'now' ? 'text-muted' : tone === 'after' ? 'text-accent' : 'text-good';
-  const badgeCls =
-    tone === 'now'
-      ? 'border-bad/35 text-bad bg-bad/10'
-      : tone === 'after'
-        ? 'border-accent/35 text-accent bg-accent/10'
-        : 'border-good/35 text-good bg-good/10';
-  const tagCls =
-    tone === 'now'
-      ? 'bg-bad/10 text-bad border-bad/35'
-      : tone === 'after'
-        ? 'bg-accent/10 text-accent border-accent/35'
-        : 'bg-good/10 text-good border-good/35';
+  // Brand reputation is high-is-good, so the color band inverts:
+  // 80+ green (best), 60-79 blue, 40-59 yellow, 20-39 pink, <20 red.
+  const c = brandClasses(index.score);
 
   return (
-    <div className={`rounded-2xl p-5 relative overflow-hidden shadow-card border ${cardCls}`}>
+    <div
+      className={`rounded-2xl p-5 relative overflow-hidden shadow-card border bg-surface ${c.cellBorder}`}
+    >
+      {/* Soft tint band along the top edge so the card reads as colored
+          without overwhelming the body copy. */}
+      <div
+        className={`absolute inset-x-0 top-0 h-1 ${c.barFill}`}
+        aria-hidden
+      />
       <div className="relative">
         <div className="flex items-center justify-between mb-3">
           <span
-            className={`text-[10px] uppercase tracking-[0.16em] font-semibold ${labelCls}`}
+            className={`text-[10px] uppercase tracking-[0.16em] font-semibold ${c.cellText}`}
           >
             {title}
           </span>
           <span
-            className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border font-semibold ${badgeCls}`}
+            className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border font-semibold ${c.pillBg} ${c.pillText} ${c.pillBorder}`}
           >
             {index.label}
           </span>
         </div>
 
         <div className="flex items-baseline gap-2 mb-3">
-          <span className="text-5xl font-bold tabular-nums tracking-tight text-ink">
+          <span
+            className={`text-5xl font-bold tabular-nums tracking-tight ${c.cellText}`}
+          >
             {index.score}
           </span>
           <span className="text-xs text-muted2">/100</span>
@@ -75,7 +66,7 @@ function Card({
           {tagline.map((p) => (
             <span
               key={p}
-              className={`text-[10px] uppercase tracking-wide px-2 py-1 rounded-full font-semibold border ${tagCls}`}
+              className={`text-[10px] uppercase tracking-wide px-2 py-1 rounded-full font-semibold border ${c.pillBg} ${c.pillText} ${c.pillBorder}`}
             >
               {p}
             </span>
@@ -119,7 +110,6 @@ export default function BrandImpact({
             does to them. Three stages: today, optimized IVR, full voice
             agent.
           </p>
-          {/* spacing kept tight; copy intentionally avoids dashes */}
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-good/10 border border-good/25 text-good">
           <TrendingUp size={13} />
@@ -131,21 +121,18 @@ export default function BrandImpact({
           title={`${university} today`}
           index={current}
           narrative={currentNarrative}
-          tone="now"
           tagline={['Bureaucratic', 'Hard to reach', 'Indifferent']}
         />
         <Card
           title={`Optimized IVR`}
           index={recommended}
           narrative={recommendedNarrative}
-          tone="after"
           tagline={['Fast', '24/7', 'No dead ends']}
         />
         <Card
           title={`Voice agent`}
           index={voiceAgent}
           narrative={voiceAgentNarrative}
-          tone="best"
           tagline={['Conversational', 'Multilingual', 'Self service']}
         />
       </div>

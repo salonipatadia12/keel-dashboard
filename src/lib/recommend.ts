@@ -2,12 +2,22 @@ import { calculateFriction } from './friction';
 import type { FrictionResult, TreeNode } from './types';
 
 let nodeCounter = 0;
+
+// Every real call line opens with mandatory boilerplate: "this call may
+// be recorded for quality," a brief brand line, possibly an emergency
+// disclaimer. ~12s is typical before the caller hears anything
+// actionable. The friction model averages durations across nodes, so we
+// bake this baseline into the root greeting + every leaf to keep the
+// projected wait time realistic — not 8s, which is shorter than the
+// disclaimer alone.
+const CALL_DISCLAIMER_BASELINE_SEC = 12;
+
 function makeNode(
   digit: string,
   label: string,
   outcome: TreeNode['outcomeType'],
   depth: number,
-  durationSec: number | null = 8
+  durationSec: number | null = 20
 ): TreeNode {
   return {
     id: `r:${++nodeCounter}:${depth}:${digit}`,
@@ -34,8 +44,8 @@ function makeRoot(): TreeNode {
     type: 'submenu',
     outcomeType: 'submenu',
     depth: 0,
-    // 5s = "Hi, this is the Sac State assistant — how can I help you today?"
-    durationSec: 5,
+    // ~12s call-recording disclaimer + 6s greeting + 8s menu read.
+    durationSec: CALL_DISCLAIMER_BASELINE_SEC + 14,
     hasOperator: true,
     isRecommended: true,
     notes: null,
@@ -152,9 +162,16 @@ const BASE_RATIONALE = [
 // 3. Adding a self-service info leaf for hours/locations/FAQs that the voice agent can
 //    answer instantly, no human needed.
 // 4. Keeping the # repeat-menu fallback.
+//
+// `todayCoverage` is the current IVR's self-service coverage as a 0..1
+// fraction. The Optimized IVR's coverage is the MAX of (today + a small
+// uplift from the new FAQ leaf, baseline floor). It must never regress
+// below what the current IVR already answers — promoting the tree to
+// "optimized" can't make question coverage worse.
 export function buildRecommendedTree(
   currentTree?: TreeNode | null,
-  currentFriction?: FrictionResult | null
+  currentFriction?: FrictionResult | null,
+  todayCoverage: number = 0
 ): RecommendResult {
   nodeCounter = 0;
   const root = makeRoot();
@@ -185,7 +202,8 @@ export function buildRecommendedTree(
   });
 
   // Self-service info leaf: next digit after departments. If departments
-  // already filled 1-9, skip (extremely unlikely).
+  // already filled 1-9, skip (extremely unlikely). Fast leaf — disclaimer
+  // is already counted at the root; FAQ playback ~15s.
   const selfServeDigit = finalDepts.length + 1;
   if (selfServeDigit <= 9) {
     root.children.push(
@@ -194,7 +212,7 @@ export function buildRecommendedTree(
         'Hours, locations & FAQs (instant)',
         'info',
         1,
-        3 // self-serve info is fast — 3s read
+        15
       )
     );
   }
@@ -204,13 +222,19 @@ export function buildRecommendedTree(
 
   addRepeatNodes(root);
 
-  // the voice agent is 24/7. Coverage: a flat IVR with one FAQ leaf can self-serve
-  // ~3 of the 12 typical student questions (hours + a couple procedural
-  // answers); everything else still requires a human.
+  // the voice agent is 24/7. Coverage: a flat IVR with one FAQ leaf can
+  // self-serve at least ~3 of the 12 typical student questions (hours +
+  // a couple procedural answers). If today's IVR already covers more
+  // (multiple info leaves on different departments), preserve that — the
+  // Optimized IVR adds an FAQ leaf on top of whatever today's tree
+  // already does, so coverage can only go up.
+  const baselineFaq = 3 / 12;
+  const FAQ_UPLIFT = 1 / 12;
+  const ivrCoverage = Math.max(baselineFaq, todayCoverage + FAQ_UPLIFT);
   const friction = calculateFriction(root, {
     hasOpZero: true,
     businessHoursOnly: false,
-    selfServiceCoverage: 3 / 12,
+    selfServiceCoverage: Math.min(1, ivrCoverage),
   });
 
   const warnings: string[] = [];
@@ -250,7 +274,10 @@ export function buildVoiceAgentTree(
 ): RecommendResult {
   nodeCounter = 0;
   const root = makeRoot();
-  root.durationSec = 3; // Greeting only — "Hi, this is the Sac State assistant."
+  // Voice agent greeting still includes the recording disclaimer (legally
+  // required) but the disclaimer overlaps with intent capture — we don't
+  // re-prompt the caller with a menu read. ~12s disclaimer + ~6s greeting.
+  root.durationSec = CALL_DISCLAIMER_BASELINE_SEC + 6;
   root.label = 'Voice agent (speak naturally)';
 
   // Two leaves, capturing the two paths a the voice agent call can take.
@@ -258,13 +285,14 @@ export function buildVoiceAgentTree(
   // 1) AI-handled — for the ~10 of 12 typical student questions the voice
   //    agent can answer end-to-end without involving a human. Type 'ai'
   //    (not 'info', not 'human') because semantically it's an AI giving
-  //    a real answer, not a generic recording or a person.
+  //    a real answer, not a generic recording or a person. Realistic
+  //    duration: ~25s for intent capture + answer + clarifying question.
   const aiAnswer = makeNode(
     '1',
     'Voice agent answers (AI)',
     'ai',
     1,
-    8
+    25
   );
   aiAnswer.notes =
     'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25 languages · around 80% of calls resolved without escalation.';
@@ -278,7 +306,7 @@ export function buildVoiceAgentTree(
     'Routed to human (when needed)',
     'human',
     1,
-    12
+    35
   );
   humanRoute.notes =
     'Complex cases · Specific advisor requests · Emergencies. The agent hands off with intent and caller identity prefilled.';

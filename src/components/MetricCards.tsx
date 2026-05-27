@@ -2,7 +2,16 @@ import KpiTile from './KpiTile';
 import type { FrictionResult, Reference } from '../lib/types';
 import type { BrandIndex } from '../lib/brand';
 import { TYPICAL_STUDENT_QUESTIONS } from '../lib/friction';
-import { Activity, Layers, Globe, Phone, Sparkles, HelpCircle } from './Icons';
+import { frictionBand, brandBand, type Band } from '../lib/scoreColor';
+import {
+  Activity,
+  Layers,
+  Globe,
+  Phone,
+  Sparkles,
+  HelpCircle,
+  MessageCircle,
+} from './Icons';
 
 function fmtDuration(sec: number): string {
   if (!Number.isFinite(sec) || sec <= 0) return 'n/a';
@@ -10,6 +19,41 @@ function fmtDuration(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = Math.round(sec % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// Map a wait time in seconds to the 0-100 friction-equivalent scale that
+// drives the color band. Same shape the friction model uses internally:
+// 30s baseline ≈ 0, 180s ≈ 100.
+function waitBand(sec: number): Band {
+  const score = Math.max(0, Math.min(100, (sec - 30) / 1.5));
+  return frictionBand(score);
+}
+
+// Generic "count of bad things" mapping. 0 is best, each unit pushes up
+// the score by ~20-25 points so the bands trip predictably.
+function countBand(n: number): Band {
+  if (!Number.isFinite(n) || n <= 0) return 'green';
+  if (n === 1) return 'blue';
+  if (n === 2) return 'yellow';
+  if (n <= 4) return 'pink';
+  return 'red';
+}
+
+// Menu depth uses the same shape but starts "green" at zero (no menu),
+// which is the K-12 / no-IVR pattern.
+function depthBand(d: number): Band {
+  if (!Number.isFinite(d) || d <= 0) return 'green';
+  if (d === 1) return 'blue';
+  if (d === 2) return 'yellow';
+  if (d === 3) return 'pink';
+  return 'red';
+}
+
+// Question coverage is a fraction; we score it as a brand-style metric
+// (high = good) on the 0-100 scale.
+function coverageBand(covered: number, total: number): Band {
+  if (total <= 0) return 'red';
+  return brandBand((covered / total) * 100);
 }
 
 interface Props {
@@ -64,6 +108,22 @@ export default function MetricCards({
       ? 'hold + menu'
       : 'on the line';
 
+  const waitFormula =
+    `Wait Time = average end-to-end call duration measured on our test calls\n` +
+    `(seconds per node, averaged across every path our crawler walked).\n\n` +
+    `Today (${fmtDuration(todayWait)}): the actual measured average.\n` +
+    `  Includes the call-recording disclaimer (~12s on most lines), greeting,\n` +
+    `  menu read, any hold-music, and the transfer or human pickup wait.\n\n` +
+    `Optimized IVR (${fmtDuration(ivrWait)}): projected. Same call-recording\n` +
+    `  baseline (~12s) + greeting + a flat one-level menu + transfer.\n` +
+    `  Reduction comes from removing nested submenus and 24/7 operator zero.\n\n` +
+    `Voice Agent (${fmtDuration(voiceWait)}): projected. Recording disclaimer\n` +
+    `  (~12s) + brief greeting + intent capture + answer or routed transfer.\n` +
+    `  Disclaimer is unavoidable — every legitimate phone system reads it.\n\n` +
+    `Time-to-resolution (what callers actually feel) drops far faster than the\n` +
+    `total wall-clock duration: an IVR forces a "hang up & redial" for any\n` +
+    `second topic, while the voice agent handles unlimited topics in one call.`;
+
   return (
     <div className="space-y-3">
       {/* Hero row, the four numbers the pitch lives on */}
@@ -71,9 +131,21 @@ export default function MetricCards({
         <KpiTile
           icon={<Activity size={14} />}
           label="Friction Score"
-          today={{ value: current.totalScore, caption: current.grade }}
-          ivr={{ value: recommended.totalScore, caption: recommended.grade }}
-          voice={{ value: voiceAgent.totalScore, caption: voiceAgent.grade }}
+          today={{
+            value: current.totalScore,
+            caption: current.grade,
+            band: frictionBand(current.totalScore),
+          }}
+          ivr={{
+            value: recommended.totalScore,
+            caption: recommended.grade,
+            band: frictionBand(recommended.totalScore),
+          }}
+          voice={{
+            value: voiceAgent.totalScore,
+            caption: voiceAgent.grade,
+            band: frictionBand(voiceAgent.totalScore),
+          }}
           delta={{ value: `down ${frictionDelta} pts`, tone: 'good' }}
           emphasis
         />
@@ -83,14 +155,19 @@ export default function MetricCards({
           today={{
             value: `${todayQuestionsCovered} of ${Q}`,
             caption: todayQuestionsCovered === 0 ? 'all need human' : 'partial',
+            band: coverageBand(todayQuestionsCovered, Q),
           }}
           ivr={{
             value: `${ivrCovered} of ${Q}`,
-            caption: 'FAQ leaf',
+            caption: ivrCovered > todayQuestionsCovered
+              ? '+FAQ leaf'
+              : 'preserves today',
+            band: coverageBand(ivrCovered, Q),
           }}
           voice={{
             value: `${voiceCovered} of ${Q}`,
             caption: 'AI self resolves',
+            band: coverageBand(voiceCovered, Q),
           }}
           delta={{ value: `up ${coverageDelta} answered`, tone: 'good' }}
           emphasis
@@ -99,18 +176,43 @@ export default function MetricCards({
         <KpiTile
           icon={<Phone size={14} />}
           label="Wait Time"
-          today={{ value: fmtDuration(todayWait), caption: todayWaitCaption }}
-          ivr={{ value: fmtDuration(ivrWait), caption: 'menu + route' }}
-          voice={{ value: fmtDuration(voiceWait), caption: 'instant intent' }}
+          today={{
+            value: fmtDuration(todayWait),
+            caption: todayWaitCaption,
+            band: waitBand(todayWait),
+          }}
+          ivr={{
+            value: fmtDuration(ivrWait),
+            caption: 'menu + route',
+            band: waitBand(ivrWait),
+          }}
+          voice={{
+            value: fmtDuration(voiceWait),
+            caption: 'instant intent',
+            band: waitBand(voiceWait),
+          }}
           delta={{ value: `${fmtDuration(waitDelta)} saved`, tone: 'good' }}
           emphasis
+          formula={waitFormula}
         />
         <KpiTile
           icon={<Sparkles size={14} />}
           label="Brand Reputation"
-          today={{ value: brandCurrent.score, caption: brandCurrent.label }}
-          ivr={{ value: brandRecommended.score, caption: brandRecommended.label }}
-          voice={{ value: brandVoice.score, caption: brandVoice.label }}
+          today={{
+            value: brandCurrent.score,
+            caption: brandCurrent.label,
+            band: brandBand(brandCurrent.score),
+          }}
+          ivr={{
+            value: brandRecommended.score,
+            caption: brandRecommended.label,
+            band: brandBand(brandRecommended.score),
+          }}
+          voice={{
+            value: brandVoice.score,
+            caption: brandVoice.label,
+            band: brandBand(brandVoice.score),
+          }}
           delta={{ value: `up ${brandDelta} pts`, tone: 'good' }}
           emphasis
           formula={brandFormula}
@@ -118,13 +220,25 @@ export default function MetricCards({
       </div>
 
       {/* Secondary row, structural metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiTile
           icon={<Layers size={14} />}
           label="Menu Levels"
-          today={{ value: current.maxDepth, caption: 'levels deep' }}
-          ivr={{ value: recommended.maxDepth, caption: 'flat menu' }}
-          voice={{ value: voiceAgent.maxDepth, caption: 'no menu' }}
+          today={{
+            value: current.maxDepth,
+            caption: 'levels deep',
+            band: depthBand(current.maxDepth),
+          }}
+          ivr={{
+            value: recommended.maxDepth,
+            caption: 'flat menu',
+            band: depthBand(recommended.maxDepth),
+          }}
+          voice={{
+            value: voiceAgent.maxDepth,
+            caption: 'no menu',
+            band: depthBand(voiceAgent.maxDepth),
+          }}
           delta={{
             value: `down ${current.maxDepth - voiceAgent.maxDepth}`,
             tone: 'good',
@@ -133,9 +247,13 @@ export default function MetricCards({
         <KpiTile
           icon={<Globe size={14} />}
           label="Web Redirects"
-          today={{ value: webRefs.length, caption: 'links spoken' }}
-          ivr={{ value: 0, caption: 'no offload' }}
-          voice={{ value: 0, caption: 'no offload' }}
+          today={{
+            value: webRefs.length,
+            caption: 'links spoken',
+            band: countBand(webRefs.length),
+          }}
+          ivr={{ value: 0, caption: 'no offload', band: countBand(0) }}
+          voice={{ value: 0, caption: 'no offload', band: countBand(0) }}
           delta={{
             value: webRefs.length > 0 ? `down ${webRefs.length}` : 'none',
             tone: webRefs.length > 0 ? 'good' : 'neutral',
@@ -145,14 +263,38 @@ export default function MetricCards({
         <KpiTile
           icon={<Phone size={14} />}
           label="Phone Transfers"
-          today={{ value: phoneRefs.length, caption: 'numbers given' }}
-          ivr={{ value: 0, caption: 'no offload' }}
-          voice={{ value: 0, caption: 'no offload' }}
+          today={{
+            value: phoneRefs.length,
+            caption: 'numbers given',
+            band: countBand(phoneRefs.length),
+          }}
+          ivr={{ value: 0, caption: 'no offload', band: countBand(0) }}
+          voice={{ value: 0, caption: 'no offload', band: countBand(0) }}
           delta={{
             value: phoneRefs.length > 0 ? `down ${phoneRefs.length}` : 'none',
             tone: phoneRefs.length > 0 ? 'good' : 'neutral',
           }}
           refs={phoneRefs}
+        />
+        <KpiTile
+          icon={<MessageCircle size={14} />}
+          label="Topics per Call"
+          today={{
+            value: 1,
+            caption: 'hang up, redial',
+            band: 'red',
+          }}
+          ivr={{
+            value: 1,
+            caption: 'one menu path',
+            band: 'red',
+          }}
+          voice={{
+            value: '∞',
+            caption: 'multi-topic chat',
+            band: 'green',
+          }}
+          delta={{ value: 'unlimited', tone: 'good' }}
         />
       </div>
     </div>

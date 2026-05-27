@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import type { UniversityData } from '../lib/types';
+import { frictionClasses } from '../lib/scoreColor';
 
 interface Props {
   universities: UniversityData[];
@@ -27,13 +28,12 @@ function scoreOf(
   return { ...score, hasNoIvr: !!score.hasNoIvr };
 }
 
-function gradeColors(grade: string): string {
-  const g = grade.toLowerCase();
-  if (g === 'poor') return 'bg-bad/15 text-bad2 border-bad/30';
-  if (g === 'fair') return 'bg-warn/15 text-warn2 border-warn/30';
-  if (g === 'good') return 'bg-good/15 text-good2 border-good/30';
-  if (g === 'excellent') return 'bg-good/20 text-good2 border-good/40';
-  return 'bg-surface text-muted border-line';
+// Color the friction badge using the shared 5-band scheme
+// (red ≥80, pink 60-79, yellow 40-59, blue 20-39, green <20).
+function badgeClasses(total: number | null): string {
+  if (total === null) return 'bg-surface text-muted border-line';
+  const c = frictionClasses(total);
+  return `${c.pillBg} ${c.pillText} ${c.pillBorder}`;
 }
 
 const Chevron = ({ open }: { open: boolean }) => (
@@ -167,7 +167,7 @@ export default function UniversitySelector({
             <span
               className={
                 'text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums ' +
-                gradeColors(activeScore.grade)
+                badgeClasses(activeScore.total)
               }
             >
               {activeScore.total}
@@ -250,7 +250,7 @@ export default function UniversitySelector({
                       <span
                         className={
                           'text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums ' +
-                          gradeColors(grade)
+                          badgeClasses(total)
                         }
                       >
                         {total}

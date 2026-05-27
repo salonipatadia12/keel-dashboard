@@ -29,6 +29,26 @@ export default {
         sub: '#2563eb',
         sub2: '#3b82f6',
         vm: '#9333ea',
+        // Score-band palette (used by scoreColor / brandColor helpers in
+        // lib/scoreColor.ts). Five bands, 20-point each:
+        //   red    >= 80   worst
+        //   pink   60-79
+        //   yellow 40-59
+        //   blue   20-39
+        //   green  < 20    best
+        // For friction this is the natural order; for brand reputation it
+        // inverts (high = good). The hexes below match the existing bad /
+        // warn / sub / good families so we share semantic colors.
+        band_red: '#dc2626',
+        band_red_soft: '#fee2e2',
+        band_pink: '#db2777',
+        band_pink_soft: '#fce7f3',
+        band_yellow: '#b45309',
+        band_yellow_soft: '#fef3c7',
+        band_blue: '#2563eb',
+        band_blue_soft: '#dbeafe',
+        band_green: '#059669',
+        band_green_soft: '#d1fae5',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

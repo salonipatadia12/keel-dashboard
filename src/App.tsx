@@ -94,7 +94,15 @@ function buildView(uni: UniversityData) {
         queueOnly,
       });
 
-  const recommended = buildRecommendedTree(built.root, currentFriction);
+  // Use the tree-computed coverage (info-leaf count) as the floor, NOT
+  // the sheet's selfServiceCoverage — older Friction Score rows pre-date
+  // the coverage column and report it as 0, which would let the optimized
+  // tree silently regress from today's working FAQ leaves.
+  const recommended = buildRecommendedTree(
+    built.root,
+    currentFriction,
+    Math.max(todayCoverage, currentFriction.selfServiceCoverage)
+  );
   const voiceAgent = buildVoiceAgentTree(built.root, currentFriction);
 
   const webRefs = built.allNodes.flatMap((n) => n.urls);
@@ -103,6 +111,12 @@ function buildView(uni: UniversityData) {
   const brandCurrent = brandReputationIndex(currentFriction);
   const brandRecommended = brandReputationIndex(recommended.friction);
   const brandVoice = brandReputationIndex(voiceAgent.friction);
+
+  // Filter menu options to this tenant only — sheets often pool rows
+  // for multiple tenants in shared workbooks.
+  const tenantMenuOptions = uni.menuMapping.filter(
+    (m) => m.university === universityName
+  );
 
   return {
     universityName,
@@ -118,6 +132,7 @@ function buildView(uni: UniversityData) {
     brandVoice,
     sheetRow,
     todayQuestionsCovered,
+    menuOptions: tenantMenuOptions,
   };
 }
 
@@ -220,6 +235,7 @@ export default function App() {
     brandVoice,
     sheetRow,
     todayQuestionsCovered,
+    menuOptions,
   } = view;
 
   const shortName = shortLabel(universityName);
@@ -403,6 +419,7 @@ export default function App() {
             tree={built.root}
             friction={currentFriction}
             height={currentHeight}
+            menuOptions={menuOptions}
           />
           <TreePanel
             variant="recommended"
