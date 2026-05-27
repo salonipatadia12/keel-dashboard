@@ -9,6 +9,7 @@ import {
 } from './lib/friction';
 import { buildRecommendedTree, buildVoiceAgentTree } from './lib/recommend';
 import { brandNarrative, brandReputationIndex } from './lib/brand';
+import { computeMenuStats, correctRecommendationText } from './lib/menuStats';
 import TopBar from './components/TopBar';
 import MetricCards from './components/MetricCards';
 import TreePanel from './components/TreePanel';
@@ -389,7 +390,12 @@ export default function App() {
             </div>
             {sheetRow.recommendations && (
               <ul className="space-y-1.5 pl-11 max-w-3xl">
-                {sheetRow.recommendations
+                {correctRecommendationText(
+                  sheetRow.recommendations,
+                  computeMenuStats(menuOptions),
+                  todayQuestionsCovered,
+                  TYPICAL_STUDENT_QUESTIONS.length
+                )
                   .split(';')
                   .map((s) => s.trim())
                   .filter(Boolean)

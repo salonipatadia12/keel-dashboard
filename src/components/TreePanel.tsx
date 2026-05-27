@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import IvrFlow from './IvrFlow';
 import type { FrictionResult, MenuItemRow, TreeNode } from '../lib/types';
 import { Check, Sparkles } from './Icons';
+import { computeMenuStats } from '../lib/menuStats';
 
 interface Props {
   variant: 'current' | 'recommended' | 'voice_agent';
@@ -53,16 +54,12 @@ function MenuDirectory({
   exploredCount: number;
 }) {
   const [open, setOpen] = useState(false);
-  // Group by menu_level so the reader can see how deep the real IVR goes
-  // versus what the test call actually walked.
-  const byLevel = menuOptions.reduce<Record<number, MenuItemRow[]>>((acc, r) => {
-    const level = r.menu_level ?? 0;
-    (acc[level] = acc[level] || []).push(r);
-    return acc;
-  }, {});
-  const levels = Object.keys(byLevel)
-    .map(Number)
-    .sort((a, b) => a - b);
+  const stats = useMemo(() => computeMenuStats(menuOptions), [menuOptions]);
+  const levels = Array.from(stats.uniqueByLevel.keys()).sort((a, b) => a - b);
+  const dedupNote =
+    stats.unique.length < menuOptions.length
+      ? ` · ${menuOptions.length} raw rows across ${stats.callCount} test ${stats.callCount === 1 ? 'call' : 'calls'} deduped`
+      : '';
 
   return (
     <div className="px-5 py-3 border-t border-line bg-bg2/30">
@@ -75,17 +72,17 @@ function MenuDirectory({
           ▸
         </span>
         <span className="font-semibold uppercase tracking-[0.14em]">
-          All menu options ({menuOptions.length} captured)
+          All menu options ({stats.unique.length} unique)
         </span>
         <span className="text-muted2 normal-case tracking-normal font-normal">
           · test call walked {exploredCount}; the rest are submenu branches
-          we logged but didn't dial
+          we logged but didn't dial{dedupNote}
         </span>
       </button>
       {open && (
         <div className="mt-3 space-y-3">
           {levels.map((level) => {
-            const rows = byLevel[level];
+            const rows = stats.uniqueByLevel.get(level) ?? [];
             return (
               <div key={level}>
                 <div className="text-[10px] uppercase tracking-[0.14em] text-muted2 font-semibold mb-1.5">
@@ -135,10 +132,14 @@ export default function TreePanel({
 }: Props) {
   const a = ACCENT[variant];
   const isRec = variant === 'recommended' || variant === 'voice_agent';
+  const menuStats = useMemo(
+    () => (menuOptions ? computeMenuStats(menuOptions) : null),
+    [menuOptions]
+  );
   const showDirectory =
     variant === 'current' &&
-    menuOptions &&
-    menuOptions.length > friction.totalNodes;
+    menuStats !== null &&
+    menuStats.unique.length > friction.totalNodes;
 
   return (
     <div className="rounded-2xl bg-surface border border-line shadow-card overflow-hidden flex flex-col">
@@ -163,7 +164,7 @@ export default function TreePanel({
           {showDirectory && (
             <StatChip
               label="Menu options"
-              value={`${menuOptions!.length} captured`}
+              value={`${menuStats!.unique.length} unique`}
             />
           )}
         </div>
