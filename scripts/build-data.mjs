@@ -31,6 +31,13 @@ const SOURCES = [
   { id: 'uiuc', file: 'IVR_UIUC.xlsx' },
   { id: 'illinois-state', file: 'IVR_Illinois_State.xlsx' },
   { id: 'ball-state', file: 'IVR_Ball_State.xlsx' },
+  { id: 'notre-dame', file: 'IVR_Notre_Dame.xlsx' },
+  { id: 'northern-illinois', file: 'IVR_Northern_Illinois.xlsx' },
+  { id: 'depaul', file: 'IVR_DePaul.xlsx' },
+  { id: 'loyola-chicago', file: 'IVR_Loyola_Chicago.xlsx' },
+  { id: 'uic', file: 'IVR_UIC.xlsx' },
+  { id: 'northwestern', file: 'IVR_Northwestern.xlsx' },
+  { id: 'uchicago', file: 'IVR_UChicago.xlsx' },
 ];
 
 function findFile(filename) {
