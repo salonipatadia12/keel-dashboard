@@ -9,7 +9,8 @@ import {
 } from './lib/friction';
 import { buildRecommendedTree, buildVoiceAgentTree } from './lib/recommend';
 import { brandNarrative, brandReputationIndex } from './lib/brand';
-import { computeMenuStats, correctRecommendationText } from './lib/menuStats';
+import { computeMenuStats } from './lib/menuStats';
+import { buildAuditNarrative } from './lib/auditNarrative';
 import TopBar from './components/TopBar';
 import MetricCards from './components/MetricCards';
 import TreePanel from './components/TreePanel';
@@ -372,51 +373,57 @@ export default function App() {
           />
         </div>
 
-        {/* Worst component callout */}
-        {sheetRow?.worst_component && (
-          <div className="mb-6 rounded-xl bg-surface border border-line shadow-card p-4">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="w-8 h-8 rounded-md bg-bad/10 border border-bad/25 flex items-center justify-center text-bad shrink-0 mt-0.5">
-                <Activity size={14} />
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-[0.16em] text-muted font-semibold mb-1">
-                  Worst component
+        {/* Audit narrative callout — every bullet is computed from the
+            actual trees rendered below, so the numbers tally. */}
+        {(() => {
+          const bullets = buildAuditNarrative({
+            currentFriction,
+            currentMenu: computeMenuStats(menuOptions),
+            recommendedTree: recommended.tree,
+            recommendedFriction: recommended.friction,
+            voiceAgentTree: voiceAgent.tree,
+            voiceAgentFriction: voiceAgent.friction,
+            todayQuestionsCovered,
+            questionsTotal: TYPICAL_STUDENT_QUESTIONS.length,
+            hasNoIvr: activeHasNoIvr,
+          });
+          if (bullets.length === 0) return null;
+          return (
+            <div className="mb-6 rounded-xl bg-surface border border-line shadow-card p-4">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-8 h-8 rounded-md bg-bad/10 border border-bad/25 flex items-center justify-center text-bad shrink-0 mt-0.5">
+                  <Activity size={14} />
                 </div>
-                <div className="text-sm font-semibold text-ink">
-                  {sheetRow.worst_component}
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.16em] text-muted font-semibold mb-1">
+                    Audit summary
+                  </div>
+                  <div className="text-sm font-semibold text-ink">
+                    {sheetRow?.worst_component
+                      ? `Worst component: ${sheetRow.worst_component}`
+                      : 'Tree-by-tree comparison'}
+                  </div>
                 </div>
               </div>
-            </div>
-            {sheetRow.recommendations && (
-              <ul className="space-y-1.5 pl-11 max-w-3xl">
-                {correctRecommendationText(
-                  sheetRow.recommendations,
-                  computeMenuStats(menuOptions),
-                  todayQuestionsCovered,
-                  TYPICAL_STUDENT_QUESTIONS.length
-                )
-                  .split(';')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((line, i) => {
-                    const cleaned = line.replace(/\s+[—–]\s+/g, ': ');
-                    return (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2 text-[12.5px] text-ink2 leading-snug"
-                      >
-                        <span className="font-mono text-[10px] text-muted2 mt-1 shrink-0">
-                          0{i + 1}
-                        </span>
-                        <span>{cleaned}</span>
-                      </li>
-                    );
-                  })}
+              <ul className="space-y-2 pl-11 max-w-3xl">
+                {bullets.map((b, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-[12.5px] text-ink2 leading-snug"
+                  >
+                    <span className="font-mono text-[10px] text-muted2 mt-1 shrink-0">
+                      0{i + 1}
+                    </span>
+                    <span>
+                      <span className="font-semibold text-ink">{b.topic}.</span>{' '}
+                      {b.detail}
+                    </span>
+                  </li>
+                ))}
               </ul>
-            )}
-          </div>
-        )}
+            </div>
+          );
+        })()}
 
         {/* Tree comparison stacked full-width */}
         <div className="space-y-4 mb-6">
