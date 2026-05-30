@@ -1,4 +1,12 @@
-export type OutcomeType = 'human' | 'voicemail' | 'dead_end' | 'info' | 'submenu' | 'repeat' | 'ai';
+export type OutcomeType =
+  | 'human'
+  | 'voicemail'
+  | 'dead_end'
+  | 'info'
+  | 'submenu'
+  | 'submenu_unexplored'
+  | 'repeat'
+  | 'ai';
 
 export interface OverviewRow {
   callId: string | null;
@@ -151,6 +159,11 @@ export interface TreeNode {
   durationSec: number | null;
   hasOperator: boolean;
   isRecommended: boolean;
+  // True for Menu Mapping options the crawler never dialed. Surfaced in the
+  // tree as a "not dialed" ghost node so the graph reflects every option
+  // the caller hears, not just paths our test calls walked. Excluded from
+  // friction scoring (no measured duration, can't trust label accuracy).
+  isGhost?: boolean;
   notes: string | null;
   urls: Reference[];
   phones: Reference[];

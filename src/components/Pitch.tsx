@@ -1,4 +1,5 @@
 import { Zap } from './Icons';
+import { SHOW_OPTIMIZED_IVR } from '../lib/config';
 
 interface Props {
   university: string;
@@ -14,6 +15,10 @@ export default function Pitch({
   voiceAgentScore,
 }: Props) {
   const drop = currentScore - voiceAgentScore;
+  // Touch `recommendedScore` so TS doesn't flag it as unused when the
+  // Optimized-IVR tier is hidden. The value is still computed upstream so
+  // re-enabling the flag restores the sentence with zero data work.
+  void recommendedScore;
   return (
     <section className="rounded-2xl bg-surface border border-line shadow-card overflow-hidden relative">
       <div className="absolute top-0 left-1/4 w-72 h-72 bg-accent/8 rounded-full blur-3xl pointer-events-none" />
@@ -32,11 +37,17 @@ export default function Pitch({
           <span className="bg-bad/10 text-bad border border-bad/30 px-2 py-0.5 rounded-md font-semibold">
             {currentScore} point friction wall
           </span>{' '}
-          today. An optimized IVR alone takes that to{' '}
-          <span className="bg-accent/10 text-accent border border-accent/30 px-2 py-0.5 rounded-md font-semibold">
-            {recommendedScore}
-          </span>
-          . A full voice agent (natural language, 24/7, multilingual,
+          today.
+          {SHOW_OPTIMIZED_IVR && (
+            <>
+              {' '}An optimized IVR alone takes that to{' '}
+              <span className="bg-accent/10 text-accent border border-accent/30 px-2 py-0.5 rounded-md font-semibold">
+                {recommendedScore}
+              </span>
+              .
+            </>
+          )}{' '}
+          A full voice agent (natural language, 24/7, multilingual,
           self service for around 60 percent of inquiries) drops it to{' '}
           <span className="bg-good/10 text-good border border-good/30 px-2 py-0.5 rounded-md font-semibold">
             {voiceAgentScore}

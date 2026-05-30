@@ -46,13 +46,17 @@ function layout(root: TreeNode): { nodes: Node[]; edges: Edge[] } {
     });
     if (parentId) {
       g.setEdge(parentId, n.id);
+      const ghost = n.isGhost === true;
       edges.push({
         id: `${parentId}->${n.id}`,
         source: parentId,
         target: n.id,
         label: n.digit ? n.digit : undefined,
         type: 'smoothstep',
-        labelBgStyle: { fill: '#0f172a', fillOpacity: 1 },
+        labelBgStyle: {
+          fill: ghost ? '#475569' : '#0f172a',
+          fillOpacity: ghost ? 0.7 : 1,
+        },
         labelBgPadding: [6, 3],
         labelBgBorderRadius: 6,
         labelStyle: {
@@ -61,7 +65,11 @@ function layout(root: TreeNode): { nodes: Node[]; edges: Edge[] } {
           fill: '#ffffff',
           fontWeight: 700,
         },
-        style: { stroke: '#cbd5e1', strokeWidth: 1.5 },
+        // Ghosts: dashed grey to telegraph "we know this exists, we just
+        // didn't dial it". Real edges stay solid.
+        style: ghost
+          ? { stroke: '#94a3b8', strokeWidth: 1.25, strokeDasharray: '4 3' }
+          : { stroke: '#cbd5e1', strokeWidth: 1.5 },
       });
     }
     n.children.forEach((c) => walk(c, n.id));

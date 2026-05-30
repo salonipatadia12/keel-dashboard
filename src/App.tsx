@@ -19,6 +19,7 @@ import Pitch from './components/Pitch';
 import UniversitySelector from './components/UniversitySelector';
 import CohortComparison, { type CohortRow } from './components/CohortComparison';
 import { Activity } from './components/Icons';
+import { SHOW_OPTIMIZED_IVR } from './lib/config';
 
 const data = raw as unknown as RawData;
 
@@ -27,7 +28,17 @@ const data = raw as unknown as RawData;
 // unavailable). The friction score doesn't apply to these lines; the
 // dashboard surfaces them with a distinct "No IVR" label instead of a
 // misleading friction number.
-const NO_IVR_IDS = new Set<string>(['northwestern', 'loyola-chicago']);
+const NO_IVR_IDS = new Set<string>([
+  'northwestern',
+  'loyola-chicago',
+  'uc-san-diego',
+  'sdsu',
+  'iu-indianapolis',
+  'ball-state',
+  'iu-bloomington',
+  'illinois-state',
+  'stanford',
+]);
 
 function treeHeight(maxDepth: number): number {
   const levels = maxDepth + 1;
@@ -66,9 +77,10 @@ function buildView(uni: UniversityData) {
 
   // self-service coverage of the existing IVR: each `info`-type leaf is
   // assumed to bundle ~3 typical student questions (FAQ pages bundle hours,
-  // locations, and procedural answers).
+  // locations, and procedural answers). Ghost (un-dialed) options don't
+  // count — we have no proof those branches actually deliver info.
   const infoLeafCount = built.allNodes.filter(
-    (n) => n.outcomeType === 'info' && n.children.length === 0
+    (n) => n.outcomeType === 'info' && n.children.length === 0 && !n.isGhost
   ).length;
   const todayQuestionsCovered = Math.min(
     TYPICAL_STUDENT_QUESTIONS.length,
@@ -78,9 +90,10 @@ function buildView(uni: UniversityData) {
 
   // queueOnly: no menu, just a single forced hold queue (Santa Clara pattern).
   // Detect by counting non-repeat tree nodes — if there's at most one and
-  // it's a human leaf, the "IVR" is just a hold queue.
+  // it's a human leaf, the "IVR" is just a hold queue. Ghosts (un-dialed
+  // MM options) are visualization sugar and must not affect this decision.
   const realLeaves = built.allNodes.filter(
-    (n) => n.id !== 'root' && n.outcomeType !== 'repeat'
+    (n) => n.id !== 'root' && n.outcomeType !== 'repeat' && !n.isGhost
   );
   const queueOnly =
     realLeaves.length === 0 ||
@@ -107,8 +120,15 @@ function buildView(uni: UniversityData) {
   );
   const voiceAgent = buildVoiceAgentTree(built.root, currentFriction);
 
-  const webRefs = built.allNodes.flatMap((n) => n.urls);
-  const phoneRefs = built.allNodes.flatMap((n) => n.phones);
+  // Refs come from dialed nodes only. Ghosts are always constructed with
+  // empty url/phone arrays today, but filter defensively so future ghost
+  // generation can't accidentally inflate the reference KPIs.
+  const webRefs = built.allNodes
+    .filter((n) => !n.isGhost)
+    .flatMap((n) => n.urls);
+  const phoneRefs = built.allNodes
+    .filter((n) => !n.isGhost)
+    .flatMap((n) => n.phones);
 
   const brandCurrent = brandReputationIndex(currentFriction);
   const brandRecommended = brandReputationIndex(recommended.friction);
@@ -386,6 +406,7 @@ export default function App() {
             todayQuestionsCovered,
             questionsTotal: TYPICAL_STUDENT_QUESTIONS.length,
             hasNoIvr: activeHasNoIvr,
+            showOptimizedIvr: SHOW_OPTIMIZED_IVR,
           });
           if (bullets.length === 0) return null;
           return (
@@ -434,13 +455,15 @@ export default function App() {
             height={currentHeight}
             menuOptions={menuOptions}
           />
-          <TreePanel
-            variant="recommended"
-            tree={recommended.tree}
-            friction={recommended.friction}
-            height={recommendedHeight}
-            rationale={recommended.rationale}
-          />
+          {SHOW_OPTIMIZED_IVR && (
+            <TreePanel
+              variant="recommended"
+              tree={recommended.tree}
+              friction={recommended.friction}
+              height={recommendedHeight}
+              rationale={recommended.rationale}
+            />
+          )}
           <TreePanel
             variant="voice_agent"
             tree={voiceAgent.tree}

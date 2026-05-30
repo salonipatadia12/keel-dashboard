@@ -231,19 +231,190 @@ export function buildPathTree(
   }
   walkAndAddRepeat(root);
 
-  // RECLASSIFY: any node that still has children is a submenu by definition,
-  // regardless of what the raw data said. Source data sometimes labels a node
-  // 'dead_end' (e.g., "caller pressed 1 then nothing → line dropped") even
-  // though that node DOES have legitimate child branches that were tested
-  // separately. Visually that's confusing — a node with children should
-  // never look terminal.
+  // RECLASSIFY: any node that still has REAL (non-ghost) children is a
+  // submenu by definition, regardless of what the raw data said. Source
+  // data sometimes labels a node 'dead_end' (e.g., "caller pressed 1 then
+  // nothing → line dropped") even though that node DOES have legitimate
+  // child branches that were tested separately. Visually that's confusing.
+  //
+  // We ignore ghost children here: a dead_end node with only ghost children
+  // (un-pressed options the agent merely heard) is still a dead_end — the
+  // ghosts are visualization sugar, not evidence the branch leads somewhere.
   function reclassifyBranchNodes(n: TreeNode) {
-    if (n.children.length > 0 && n.id !== 'root') {
+    const realKids = n.children.filter((c) => !c.isGhost);
+    if (realKids.length > 0 && n.id !== 'root') {
       n.outcomeType = 'submenu';
     }
     n.children.forEach(reclassifyBranchNodes);
   }
   reclassifyBranchNodes(root);
+
+  // GHOST NODES: every option the caller hears, even ones we never dialed.
+  // Menu Mapping logs the option text from each test call; if our crawler
+  // didn't drill into that branch (BFS budget, or call hung up before we
+  // could), the option still exists for the caller. Add it as a faded
+  // ghost node so the graph reflects the WHOLE tree, not just walked paths.
+  //
+  // MM `path` = the PARENT path where this option is offered (single
+  // segment — null/empty for the root menu, otherwise the digit of the
+  // depth-1 ancestor). This is the same convention findLabel() above uses.
+  // The option's own tree path is therefore parentPath + '>' + digit.
+  //
+  // Dedup by own path: a 9-option menu sampled across 10 test calls
+  // produces 90 MM rows for those 9 options — we want 9 ghosts, not 90.
+  //
+  // ECHO FILTER: most IVRs replay the root menu after a digit press fails
+  // to land on a submenu (CSUN, USC, UIUC, Notre Dame, etc. all do this).
+  // The LLM that extracts MM rows logs those replays as deeper-level rows
+  // — sometimes with exact root labels, sometimes paraphrased. Detect
+  // echo calls at the call level: if a test call's extracted options are
+  // mostly variants of root labels, the call was an echo round and ALL
+  // its rows should be suppressed.
+  const normLabel = (s: string | null | undefined): string =>
+    (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  // Two-token-overlap fuzzy match catches the paraphrase cases (e.g.
+  // "Password resets and technical account issues" vs root's
+  // "Password resets, account issues, technical questions").
+  const tokens = (s: string): Set<string> => {
+    const t = s.split(/[^a-z0-9]+/).filter((w) => w.length >= 4);
+    return new Set(t);
+  };
+  const rootLabels = new Set<string>();
+  const rootTokenSets: Set<string>[] = [];
+  for (const m of menu) {
+    if (m.university !== university) continue;
+    const isRoot =
+      m.menu_level === 0 ||
+      ((m.menu_level ?? 0) >= 1 && (m.path === null || m.path === ''));
+    if (isRoot && m.option_label) {
+      const n = normLabel(m.option_label);
+      rootLabels.add(n);
+      rootTokenSets.push(tokens(n));
+    }
+  }
+  const looksLikeRoot = (label: string | null | undefined): boolean => {
+    if (!label) return false;
+    const n = normLabel(label);
+    if (rootLabels.has(n)) return true;
+    const t = tokens(n);
+    if (t.size === 0) return false;
+    for (const rt of rootTokenSets) {
+      if (rt.size === 0) continue;
+      // Count distinct token overlap. Require ≥2 shared tokens AND
+      // overlap covers ≥60% of the smaller set — strict enough that an
+      // accidental shared word like "office" doesn't trigger a match.
+      let overlap = 0;
+      for (const w of t) if (rt.has(w)) overlap++;
+      const smaller = Math.min(t.size, rt.size);
+      if (overlap >= 2 && overlap / smaller >= 0.6) return true;
+    }
+    return false;
+  };
+  // Group non-root rows by callId. A call is an "echo round" if ≥50% of
+  // the options it extracted look like root labels; all its rows then get
+  // dropped from ghost rendering.
+  const ECHO_CALL_THRESHOLD = 0.5;
+  const rowsByCall = new Map<string, MenuItemRow[]>();
+  for (const m of menu) {
+    if (m.university !== university || !m.callId) continue;
+    const isRoot =
+      m.menu_level === 0 ||
+      ((m.menu_level ?? 0) >= 1 && (m.path === null || m.path === ''));
+    if (isRoot) continue;
+    const arr = rowsByCall.get(m.callId) ?? [];
+    arr.push(m);
+    rowsByCall.set(m.callId, arr);
+  }
+  const echoCallIds = new Set<string>();
+  for (const [cid, rows] of rowsByCall) {
+    if (rows.length < 3) continue; // sample too small to judge
+    const hits = rows.filter((r) => looksLikeRoot(r.option_label)).length;
+    if (hits / rows.length >= ECHO_CALL_THRESHOLD) echoCallIds.add(cid);
+  }
+  type GhostSeed = { row: MenuItemRow; parentPath: string };
+  const ghostByOwnPath = new Map<string, GhostSeed>();
+  // Only treat a row as a ghost if its digit is a real keypad value.
+  // The LLM occasionally extracts non-digit "options" like "any" (from
+  // "press any key to..."), "star", "0-9", etc. — those aren't navigable
+  // menu entries and shouldn't appear in the tree.
+  const isRealDigit = (d: string): boolean => /^[0-9*]$/.test(d);
+  for (const m of menu) {
+    if (m.university !== university) continue;
+    const d = digitStr(m.digit);
+    if (!d || d === '#') continue; // # is handled by addRepeatNodes
+    if (!isRealDigit(d)) continue;
+    const parentPath =
+      m.path === null || m.path === undefined || m.path === ''
+        ? 'root'
+        : pathKey(m.path);
+    const ownPath = parentPath === 'root' ? d : `${parentPath}>${d}`;
+    if (byPath.has(ownPath)) continue; // already a real (dialed) node
+    if (ghostByOwnPath.has(ownPath)) continue;
+    // Echo guard: skip the whole call's output if it was an echo round,
+    // and as a per-row fallback skip any deeper row whose label fuzzy-
+    // matches a root option.
+    if (m.callId && echoCallIds.has(m.callId)) continue;
+    if (parentPath !== 'root' && looksLikeRoot(m.option_label)) continue;
+    ghostByOwnPath.set(ownPath, { row: m, parentPath });
+  }
+  for (const [ownPath, { row, parentPath }] of ghostByOwnPath) {
+    const parent = byPath.get(parentPath);
+    if (!parent) continue; // parent isn't a dialed node — can't place this ghost
+    // Skip ALL terminal parents. human/voicemail: WorkflowB loop-bug guard.
+    // dead_end: when the crawler confirmed the branch goes nowhere, MM rows
+    // logged at that path are unreliable (transcript often just contains
+    // the IVR re-prompting, not real submenu options). Attaching ghosts
+    // there clutters the tree with options the caller can't actually reach.
+    if (
+      parent.outcomeType === 'human' ||
+      parent.outcomeType === 'voicemail' ||
+      parent.outcomeType === 'dead_end'
+    )
+      continue;
+    const d = digitStr(row.digit);
+    const ghost: TreeNode = {
+      id: ownPath,
+      digit: d,
+      label: row.option_label || `Digit ${d}`,
+      type: row.type || 'submenu',
+      outcomeType: normalizeOutcome(row.type),
+      depth: parent.depth + 1,
+      durationSec: null,
+      hasOperator: false,
+      isRecommended: false,
+      isGhost: true,
+      notes: null,
+      urls: [],
+      phones: [],
+      children: [],
+    };
+    parent.children.push(ghost);
+    byPath.set(ownPath, ghost);
+  }
+  // Re-sort children now that ghosts are mixed in alongside dialed nodes.
+  sortRec(root);
+  // Re-run branch reclassification — a previously-leaf node that just gained
+  // ghost children needs to read as a submenu now.
+  reclassifyBranchNodes(root);
+
+  // MARK UNEXPLORED SUBMENUS: a dialed submenu node with no children
+  // (neither real nor ghost) means the crawler confirmed a submenu existed
+  // but we never captured its contents — either the crawler didn't drill
+  // in, or the LLM only extracted root-menu echoes for that call. Render
+  // these distinctly so the dashboard doesn't claim a dropdown that's
+  // empty.
+  function markUnexplored(n: TreeNode) {
+    if (
+      n.id !== 'root' &&
+      n.outcomeType === 'submenu' &&
+      n.children.length === 0 &&
+      !n.isGhost
+    ) {
+      n.outcomeType = 'submenu_unexplored';
+    }
+    n.children.forEach(markUnexplored);
+  }
+  markUnexplored(root);
 
   // BFS list of remaining nodes
   const allNodes: TreeNode[] = [];

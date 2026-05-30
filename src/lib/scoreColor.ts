@@ -18,10 +18,16 @@ export interface BandClasses {
   pillBg: string;
   pillText: string;
   pillBorder: string;
-  // Soft cell tint used inside KPI tiles, with a contrasting border.
+  // KPI-tile cell fill: dark, saturated band variant (band_X_dark) so red
+  // reads as alarming and green as safe at a glance. Paired with cellTextSolid.
   cellBg: string;
   cellBorder: string;
+  // Saturated band color text — use on WHITE/light surfaces (e.g. BrandImpact
+  // cards, where the body is bg-surface).
   cellText: string;
+  // White text — use on cellBg dark fills (e.g. KpiTile cells). Caption rows
+  // can apply `opacity-80` for a softened secondary line.
+  cellTextSolid: string;
   // Bar fill used by the rankings bars.
   barFill: string;
   // Hex value of the solid color — useful for inline SVG / non-Tailwind needs.
@@ -33,9 +39,10 @@ const CLASSES: Record<Band, BandClasses> = {
     pillBg: 'bg-band_red/15',
     pillText: 'text-band_red',
     pillBorder: 'border-band_red/35',
-    cellBg: 'bg-band_red/8',
+    cellBg: 'bg-band_red_dark',
     cellBorder: 'border-band_red/30',
     cellText: 'text-band_red',
+    cellTextSolid: 'text-white',
     barFill: 'bg-band_red',
     hex: '#dc2626',
   },
@@ -43,9 +50,10 @@ const CLASSES: Record<Band, BandClasses> = {
     pillBg: 'bg-band_pink/15',
     pillText: 'text-band_pink',
     pillBorder: 'border-band_pink/35',
-    cellBg: 'bg-band_pink/8',
+    cellBg: 'bg-band_pink_dark',
     cellBorder: 'border-band_pink/30',
     cellText: 'text-band_pink',
+    cellTextSolid: 'text-white',
     barFill: 'bg-band_pink',
     hex: '#db2777',
   },
@@ -53,9 +61,10 @@ const CLASSES: Record<Band, BandClasses> = {
     pillBg: 'bg-band_yellow/15',
     pillText: 'text-band_yellow',
     pillBorder: 'border-band_yellow/35',
-    cellBg: 'bg-band_yellow/8',
+    cellBg: 'bg-band_yellow_dark',
     cellBorder: 'border-band_yellow/30',
     cellText: 'text-band_yellow',
+    cellTextSolid: 'text-white',
     barFill: 'bg-band_yellow',
     hex: '#b45309',
   },
@@ -63,9 +72,10 @@ const CLASSES: Record<Band, BandClasses> = {
     pillBg: 'bg-band_blue/15',
     pillText: 'text-band_blue',
     pillBorder: 'border-band_blue/35',
-    cellBg: 'bg-band_blue/8',
+    cellBg: 'bg-band_blue_dark',
     cellBorder: 'border-band_blue/30',
     cellText: 'text-band_blue',
+    cellTextSolid: 'text-white',
     barFill: 'bg-band_blue',
     hex: '#2563eb',
   },
@@ -73,9 +83,10 @@ const CLASSES: Record<Band, BandClasses> = {
     pillBg: 'bg-band_green/15',
     pillText: 'text-band_green',
     pillBorder: 'border-band_green/35',
-    cellBg: 'bg-band_green/8',
+    cellBg: 'bg-band_green_dark',
     cellBorder: 'border-band_green/30',
     cellText: 'text-band_green',
+    cellTextSolid: 'text-white',
     barFill: 'bg-band_green',
     hex: '#059669',
   },

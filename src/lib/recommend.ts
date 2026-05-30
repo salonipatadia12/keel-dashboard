@@ -121,6 +121,9 @@ function extractDepartments(currentTree: TreeNode): {
   const seen = new Set<string>();
 
   const consider = (n: TreeNode) => {
+    // submenu_unexplored = "we know a menu exists here but didn't capture
+    // its contents" — not a real department offering to promote.
+    if (n.outcomeType === 'submenu_unexplored') return;
     if (!n.label || /^digit\s+/i.test(n.label)) return;
     const cleaned = cleanDeptLabel(n.label);
     const key = cleaned.toLowerCase();
@@ -131,12 +134,27 @@ function extractDepartments(currentTree: TreeNode): {
   };
 
   for (const child of currentTree.children) {
-    if (child.outcomeType === 'repeat') continue;
-    const realKids = child.children.filter((c) => c.outcomeType !== 'repeat');
+    if (
+      child.outcomeType === 'repeat' ||
+      child.outcomeType === 'submenu_unexplored' ||
+      child.isGhost
+    )
+      continue;
+    const realKids = child.children.filter(
+      (c) =>
+        c.outcomeType !== 'repeat' &&
+        c.outcomeType !== 'submenu_unexplored' &&
+        !c.isGhost
+    );
     if (realKids.length > 0) {
       // Submenu was drilled into — its leaves are the real offerings.
       for (const grand of realKids) {
-        const grandKids = grand.children.filter((c) => c.outcomeType !== 'repeat');
+        const grandKids = grand.children.filter(
+          (c) =>
+            c.outcomeType !== 'repeat' &&
+            c.outcomeType !== 'submenu_unexplored' &&
+            !c.isGhost
+        );
         if (grandKids.length === 0) consider(grand);
       }
     } else {
@@ -274,42 +292,67 @@ export function buildVoiceAgentTree(
 ): RecommendResult {
   nodeCounter = 0;
   const root = makeRoot();
-  // Voice agent greeting still includes the recording disclaimer (legally
-  // required) but the disclaimer overlaps with intent capture — we don't
-  // re-prompt the caller with a menu read. ~12s disclaimer + ~6s greeting.
-  root.durationSec = CALL_DISCLAIMER_BASELINE_SEC + 6;
+  // Voice agent greeting: ~12s recording disclaimer (legally required) + ~6s
+  // greeting + ~4s "what can I help you with?" intent prompt = 22s before
+  // the caller's first word.
+  root.durationSec = CALL_DISCLAIMER_BASELINE_SEC + 10;
   root.label = 'Voice agent (speak naturally)';
 
-  // Two leaves, capturing the two paths a the voice agent call can take.
+  // Two leaves, capturing the two paths a voice agent call can take.
   //
-  // 1) AI-handled — for the ~10 of 12 typical student questions the voice
-  //    agent can answer end-to-end without involving a human. Type 'ai'
-  //    (not 'info', not 'human') because semantically it's an AI giving
-  //    a real answer, not a generic recording or a person. Realistic
-  //    duration: ~25s for intent capture + answer + clarifying question.
+  // 1) AI-handled — the voice agent answers end-to-end without a human.
+  //    Type 'ai' (not 'info', not 'human') because semantically it's an AI
+  //    giving a real answer, not a recording or a person.
+  //
+  //    Duration calibration: leaf duration here represents the FULL caller
+  //    experience for this path — pickup → disclaimer → greeting → intent
+  //    capture → answer/handoff — matching how today's data is logged
+  //    (each digit_test call's `duration` is the whole call from pickup
+  //    to hangup, so the friction averaging stays apples-to-apples).
+  //
+  //    Budget: 12s disclaimer + 10s greeting/intent prompt + ~68s of
+  //    conversation (3 turns × ~22s: caller speaks 4-6s + AI latency
+  //    ~700ms + AI speaks 10-15s) = ~90s end-to-end. Root.durationSec
+  //    above is metadata only — it's excluded from the avg by friction.ts.
+  //
+  //    Benchmarks (May 2026 research):
+  //    - Vapi: 465ms optimized end-to-end, 700-1500ms typical
+  //    - Retell AI: 620ms end-to-end response latency
+  //    - Bland AI: ~800ms-2.5s latency (higher end of the range)
+  //    - PolyAI Golden Nugget (hotel reservations): 5-minute AHT — but
+  //      that's a complex multi-step booking, not a single Q&A
+  //    - Retell insurance FNOL: 5.8min AHT vs 12.4min human (J.D. Power
+  //      benchmark) — also a multi-question intake, not single Q&A
+  //    - Klarna chat AI: <2min vs 11min for human (chat, not voice; full
+  //      issue resolution)
+  //    For a university single-question Q&A, 90s is the credible midpoint
+  //    between sub-2min chat resolution and multi-minute complex IVR
+  //    intake calls.
   const aiAnswer = makeNode(
     '1',
     'Voice agent answers (AI)',
     'ai',
     1,
-    25
+    90
   );
   aiAnswer.notes =
-    'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25 languages · around 80% of calls resolved without escalation.';
+    'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25 languages · around 80% of calls resolved without escalation. ~90s for a single question with a clarifying turn.';
 
-  // 2) Routed to a human — when the AI hits something it shouldn't decide
-  //    (academic standing, advisor specifics, complex disputes). the voice agent
-  //    transfers with intent + caller context already in hand so the human
-  //    picks up at speed.
+  // 2) Routed to a human — AI captures intent + identity, then transfers.
+  //    Duration: ~25s AI intent capture + ~50s transfer/hold + ~15s human
+  //    pickup acknowledgment = ~90s before the caller is actually being
+  //    helped by the human. Still well below today's 2-3min university
+  //    IVRs where the caller waits through nested menus before reaching
+  //    a person.
   const humanRoute = makeNode(
     '2',
     'Routed to human (when needed)',
     'human',
     1,
-    35
+    90
   );
   humanRoute.notes =
-    'Complex cases · Specific advisor requests · Emergencies. The agent hands off with intent and caller identity prefilled.';
+    'Complex cases · Specific advisor requests · Emergencies. The agent hands off with intent and caller identity prefilled, so the human picks up at speed (~25s AI intent + ~50s transfer wait + ~15s human pickup).';
 
   root.children = [aiAnswer, humanRoute];
   addRepeatNodes(root);

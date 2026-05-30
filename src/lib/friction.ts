@@ -127,10 +127,15 @@ export function calculateFriction(
   root: TreeNode,
   inputs: FrictionInputs
 ): FrictionResult {
-  // All non-root, non-repeat nodes. We identify root by id (empty digit alone
-  // is not safe — synthetic queue leaves can have empty digits too).
+  // All non-root, non-repeat, non-ghost nodes. We identify root by id (empty
+  // digit alone is not safe — synthetic queue leaves can have empty digits
+  // too). Ghosts are un-dialed Menu Mapping options — they have no measured
+  // duration and unverified outcome types, so excluding them keeps friction
+  // calibrated against paths we actually walked. Ghosts also don't recurse
+  // (they're always leaves with no children), so we can safely return early.
   const all: TreeNode[] = [];
   const walk = (n: TreeNode) => {
+    if (n.isGhost) return;
     if (n !== root && n.outcomeType !== 'repeat') all.push(n);
     n.children.forEach(walk);
   };
@@ -139,10 +144,15 @@ export function calculateFriction(
   const totalNodes = Math.max(all.length, 1);
   const maxDepth = all.length ? Math.max(...all.map((n) => n.depth)) : 1;
 
-  // Branching factor (avg real children at branching nodes)
+  // Branching factor (avg real children at branching nodes). Ghost children
+  // don't count — friction-score branching reflects what we measured, not
+  // what we logged-but-skipped.
   const branching: number[] = [];
   const collectBranch = (n: TreeNode) => {
-    const realKids = n.children.filter((c) => c.outcomeType !== 'repeat');
+    if (n.isGhost) return;
+    const realKids = n.children.filter(
+      (c) => c.outcomeType !== 'repeat' && !c.isGhost
+    );
     if (realKids.length > 0) branching.push(realKids.length);
     n.children.forEach(collectBranch);
   };
@@ -169,7 +179,11 @@ export function calculateFriction(
   // Longest single menu-listen the caller experienced (a branching node's
   // duration is how long the call sat at that menu).
   const branchDurations = all
-    .filter((n) => n.children.filter((c) => c.outcomeType !== 'repeat').length > 0)
+    .filter(
+      (n) =>
+        n.children.filter((c) => c.outcomeType !== 'repeat' && !c.isGhost)
+          .length > 0
+    )
     .map((n) => n.durationSec)
     .filter((d): d is number => d !== null && d !== undefined);
   const maxBranchDuration = branchDurations.length > 0 ? Math.max(...branchDurations) : 0;

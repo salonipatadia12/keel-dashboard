@@ -3,6 +3,7 @@ import type { FrictionResult, Reference } from '../lib/types';
 import type { BrandIndex } from '../lib/brand';
 import { TYPICAL_STUDENT_QUESTIONS } from '../lib/friction';
 import { frictionBand, brandBand, type Band } from '../lib/scoreColor';
+import { SHOW_OPTIMIZED_IVR } from '../lib/config';
 import {
   Activity,
   Layers,
@@ -86,7 +87,9 @@ export default function MetricCards({
   const voiceCovered = Math.round(voiceAgent.selfServiceCoverage * Q);
 
   const frictionDelta = current.totalScore - voiceAgent.totalScore;
-  const brandDelta = brandVoice.score - brandCurrent.score;
+  // Brand Damage is high-is-bad, so the win is current minus voice
+  // (positive = damage removed).
+  const brandDelta = brandCurrent.score - brandVoice.score;
   const coverageDelta = voiceCovered - todayQuestionsCovered;
 
   const coverageFormula =
@@ -114,21 +117,28 @@ export default function MetricCards({
     `Today (${fmtDuration(todayWait)}): the actual measured average.\n` +
     `  Includes the call-recording disclaimer (~12s on most lines), greeting,\n` +
     `  menu read, any hold-music, and the transfer or human pickup wait.\n\n` +
-    `Optimized IVR (${fmtDuration(ivrWait)}): projected. Same call-recording\n` +
-    `  baseline (~12s) + greeting + a flat one-level menu + transfer.\n` +
-    `  Reduction comes from removing nested submenus and 24/7 operator zero.\n\n` +
+    (SHOW_OPTIMIZED_IVR
+      ? `Optimized IVR (${fmtDuration(ivrWait)}): projected. Same call-recording\n` +
+        `  baseline (~12s) + greeting + a flat one-level menu + transfer.\n` +
+        `  Reduction comes from removing nested submenus and 24/7 operator zero.\n\n`
+      : '') +
     `Voice Agent (${fmtDuration(voiceWait)}): projected. Recording disclaimer\n` +
     `  (~12s) + brief greeting + intent capture + answer or routed transfer.\n` +
     `  Disclaimer is unavoidable — every legitimate phone system reads it.\n\n` +
     `Time-to-resolution (what callers actually feel) drops far faster than the\n` +
-    `total wall-clock duration: an IVR forces a "hang up & redial" for any\n` +
-    `second topic, while the voice agent handles unlimited topics in one call.`;
+    `total wall-clock duration: ${SHOW_OPTIMIZED_IVR ? 'an IVR forces a "hang up & redial" for any\n  second topic, while the voice agent handles unlimited topics in one call' : 'today\'s IVRs force a "hang up & redial" for any\n  second topic, while the voice agent handles unlimited topics in one call'}.`;
+
+  // Pre-bind the dashboard-wide Optimized-IVR flag once so each tile call
+  // below stays terse. Flipping SHOW_OPTIMIZED_IVR in lib/config.ts toggles
+  // the middle column across every tile here without further edits.
+  const hideIvr = !SHOW_OPTIMIZED_IVR;
 
   return (
     <div className="space-y-3">
       {/* Hero row, the four numbers the pitch lives on */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiTile
+          hideIvr={hideIvr}
           icon={<Activity size={14} />}
           label="Friction Score"
           today={{
@@ -150,6 +160,7 @@ export default function MetricCards({
           emphasis
         />
         <KpiTile
+          hideIvr={hideIvr}
           icon={<HelpCircle size={14} />}
           label="Question Coverage"
           today={{
@@ -174,6 +185,7 @@ export default function MetricCards({
           formula={coverageFormula}
         />
         <KpiTile
+          hideIvr={hideIvr}
           icon={<Phone size={14} />}
           label="Wait Time"
           today={{
@@ -196,24 +208,25 @@ export default function MetricCards({
           formula={waitFormula}
         />
         <KpiTile
+          hideIvr={hideIvr}
           icon={<Sparkles size={14} />}
-          label="Brand Reputation"
+          label="Brand Damage"
           today={{
             value: brandCurrent.score,
             caption: brandCurrent.label,
-            band: brandBand(brandCurrent.score),
+            band: frictionBand(brandCurrent.score),
           }}
           ivr={{
             value: brandRecommended.score,
             caption: brandRecommended.label,
-            band: brandBand(brandRecommended.score),
+            band: frictionBand(brandRecommended.score),
           }}
           voice={{
             value: brandVoice.score,
             caption: brandVoice.label,
-            band: brandBand(brandVoice.score),
+            band: frictionBand(brandVoice.score),
           }}
-          delta={{ value: `up ${brandDelta} pts`, tone: 'good' }}
+          delta={{ value: `down ${brandDelta} pts`, tone: 'good' }}
           emphasis
           formula={brandFormula}
         />
@@ -222,6 +235,7 @@ export default function MetricCards({
       {/* Secondary row, structural metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiTile
+          hideIvr={hideIvr}
           icon={<Layers size={14} />}
           label="Menu Levels"
           today={{
@@ -245,6 +259,7 @@ export default function MetricCards({
           }}
         />
         <KpiTile
+          hideIvr={hideIvr}
           icon={<Globe size={14} />}
           label="Web Redirects"
           today={{
@@ -261,6 +276,7 @@ export default function MetricCards({
           refs={webRefs}
         />
         <KpiTile
+          hideIvr={hideIvr}
           icon={<Phone size={14} />}
           label="Phone Transfers"
           today={{
@@ -277,6 +293,7 @@ export default function MetricCards({
           refs={phoneRefs}
         />
         <KpiTile
+          hideIvr={hideIvr}
           icon={<MessageCircle size={14} />}
           label="Topics per Call"
           today={{

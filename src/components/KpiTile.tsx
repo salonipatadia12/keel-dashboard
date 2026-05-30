@@ -22,6 +22,10 @@ interface Props {
   refs?: Reference[];
   emphasis?: boolean;
   formula?: string;
+  // When true, suppress the middle "Optimized IVR" cell and collapse to
+  // a 2-column today→voice layout. Caller still passes `ivr` so flipping
+  // the SHOW_OPTIMIZED_IVR flag back on is a single edit.
+  hideIvr?: boolean;
 }
 
 function Cell({
@@ -46,18 +50,18 @@ function Cell({
       className={`rounded-lg border px-2 py-2 ${c.cellBg} ${c.cellBorder} flex flex-col h-full`}
     >
       <div
-        className={`text-[8px] uppercase tracking-wider font-semibold mb-1 ${c.cellText} whitespace-nowrap`}
+        className={`text-[8px] uppercase tracking-wider font-semibold mb-1 ${c.cellTextSolid} opacity-85 whitespace-nowrap`}
       >
         {labels[tier]}
       </div>
       <div
-        className={`text-lg font-bold tabular-nums leading-none whitespace-nowrap ${c.cellText}`}
+        className={`text-lg font-bold tabular-nums leading-none whitespace-nowrap ${c.cellTextSolid}`}
       >
         {value}
       </div>
       {caption && (
         <div
-          className={`text-[8px] mt-1.5 leading-tight whitespace-nowrap ${c.cellText} opacity-80`}
+          className={`text-[8px] mt-1.5 leading-tight whitespace-nowrap ${c.cellTextSolid} opacity-80`}
         >
           {caption}
         </div>
@@ -76,7 +80,12 @@ export default function KpiTile({
   refs,
   emphasis,
   formula,
+  hideIvr,
 }: Props) {
+  // Touch `ivr` so TypeScript doesn't flag the prop as unused when hideIvr
+  // is true — the value is intentionally retained on the call site for an
+  // easy re-enable later.
+  void ivr;
   const [open, setOpen] = useState(false);
   const hasRefs = refs && refs.length > 0;
 
@@ -111,32 +120,47 @@ export default function KpiTile({
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-1.5 items-stretch relative">
+      <div
+        className={
+          (hideIvr ? 'grid grid-cols-2 gap-1.5 ' : 'grid grid-cols-3 gap-1.5 ') +
+          'items-stretch relative'
+        }
+      >
         <Cell
           tier="today"
           band={today.band}
           value={today.value}
           caption={today.caption}
         />
-        <Cell
-          tier="ivr"
-          band={ivr.band}
-          value={ivr.value}
-          caption={ivr.caption}
-        />
+        {!hideIvr && (
+          <Cell
+            tier="ivr"
+            band={ivr.band}
+            value={ivr.value}
+            caption={ivr.caption}
+          />
+        )}
         <Cell
           tier="voice"
           band={voice.band}
           value={voice.value}
           caption={voice.caption}
         />
-        {/* Connecting arrows */}
-        <div className="absolute left-1/3 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-surface border border-line flex items-center justify-center text-muted2 z-10">
-          <ArrowRight size={9} />
-        </div>
-        <div className="absolute left-2/3 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-surface border border-line flex items-center justify-center text-muted2 z-10">
-          <ArrowRight size={9} />
-        </div>
+        {/* Connecting arrows — one for the 2-col layout, two for the 3-col. */}
+        {hideIvr ? (
+          <div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-surface border border-line flex items-center justify-center text-muted2 z-10">
+            <ArrowRight size={9} />
+          </div>
+        ) : (
+          <>
+            <div className="absolute left-1/3 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-surface border border-line flex items-center justify-center text-muted2 z-10">
+              <ArrowRight size={9} />
+            </div>
+            <div className="absolute left-2/3 top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-surface border border-line flex items-center justify-center text-muted2 z-10">
+              <ArrowRight size={9} />
+            </div>
+          </>
+        )}
       </div>
 
       {(hasRefs || formula) && (

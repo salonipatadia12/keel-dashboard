@@ -59,6 +59,15 @@ const STYLE: Record<
     icon: Menu,
     accent: 'bg-sub',
   },
+  submenu_unexplored: {
+    border: 'border-muted2/40',
+    chipBg: 'bg-surface2',
+    chipText: 'text-muted2',
+    iconColor: 'text-muted2',
+    tag: 'Menu (not captured)',
+    icon: Menu,
+    accent: 'bg-muted2',
+  },
   repeat: {
     border: 'border-line2',
     chipBg: 'bg-surface2',
@@ -90,30 +99,52 @@ export default function IvrNode({ data }: { data: IvrNodeData }) {
   const hasUrl = n.urls.length > 0;
   const hasPhone = n.phones.length > 0;
   const isRoot = n.id === 'root' || n.id === 'r:root';
+  const ghost = n.isGhost === true;
 
   return (
     <div
-      className={`bg-surface rounded-xl border ${s.border} shadow-card w-[196px] overflow-hidden font-sans`}
+      className={
+        ghost
+          ? 'bg-surface rounded-xl border border-dashed border-line2 shadow-sm w-[196px] overflow-hidden font-sans opacity-65 hover:opacity-90 transition'
+          : `bg-surface rounded-xl border ${s.border} shadow-card w-[196px] overflow-hidden font-sans`
+      }
     >
       <Handle
         type="target"
         position={Position.Top}
         className="!bg-line2 !w-2 !h-2 !border-0 !-translate-y-1/2"
       />
-      <div className={`h-1 w-full ${s.accent}`} />
+      <div
+        className={
+          ghost
+            ? 'h-1 w-full bg-line2'
+            : `h-1 w-full ${s.accent}`
+        }
+      />
       <div className="px-3 py-2.5">
         <div className="flex items-center justify-between mb-1.5">
           <span className="font-mono text-[10.5px] tracking-wider text-muted2 font-semibold">
             {isRoot ? 'ROOT' : n.digit ? `▸ ${n.digit}` : ' '}
           </span>
           <span
-            className={`text-[9.5px] uppercase tracking-wider px-1.5 py-0.5 rounded ${s.chipBg} ${s.chipText} font-bold flex items-center gap-1`}
+            className={
+              ghost
+                ? 'text-[9.5px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface2 text-muted2 border border-dashed border-line2 font-bold flex items-center gap-1'
+                : `text-[9.5px] uppercase tracking-wider px-1.5 py-0.5 rounded ${s.chipBg} ${s.chipText} font-bold flex items-center gap-1`
+            }
+            title={ghost ? 'Captured from a dialed call (heard in the menu) but this specific digit was never tested by the crawler' : undefined}
           >
             <Icon size={9} />
-            {s.tag}
+            {ghost ? 'Not tested' : s.tag}
           </span>
         </div>
-        <div className="text-[12.5px] leading-snug font-semibold text-ink line-clamp-2 mb-1.5">
+        <div
+          className={
+            ghost
+              ? 'text-[12.5px] leading-snug font-medium text-muted line-clamp-2 mb-1.5'
+              : 'text-[12.5px] leading-snug font-semibold text-ink line-clamp-2 mb-1.5'
+          }
+        >
           {n.label}
         </div>
         {n.notes && n.isRecommended && (

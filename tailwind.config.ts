@@ -41,14 +41,22 @@ export default {
         // warn / sub / good families so we share semantic colors.
         band_red: '#dc2626',
         band_red_soft: '#fee2e2',
+        // Darker variant used as the KPI tile cell fill — saturated enough
+        // that red instantly reads as "bad" at a glance and yields AA
+        // contrast (≥4.5:1) against white text.
+        band_red_dark: '#b91c1c',
         band_pink: '#db2777',
         band_pink_soft: '#fce7f3',
+        band_pink_dark: '#be185d',
         band_yellow: '#b45309',
         band_yellow_soft: '#fef3c7',
+        band_yellow_dark: '#92400e',
         band_blue: '#2563eb',
         band_blue_soft: '#dbeafe',
+        band_blue_dark: '#1d4ed8',
         band_green: '#059669',
         band_green_soft: '#d1fae5',
+        band_green_dark: '#047857',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
