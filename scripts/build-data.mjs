@@ -57,6 +57,7 @@ const SOURCES = [
   { id: 'uic', file: 'IVR_UIC.xlsx', workspace: 'universities' },
   { id: 'northwestern', file: 'IVR_Northwestern.xlsx', workspace: 'universities' },
   { id: 'uchicago', file: 'IVR_UChicago.xlsx', workspace: 'universities' },
+  { id: 'alabama-state', file: 'IVR_Alabama State University.xlsx', workspace: 'universities' },
   {
     id: 'tusd',
     file: 'IVR_Torrance_USD.xlsx',
