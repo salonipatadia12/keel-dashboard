@@ -1,6 +1,6 @@
 import type { BrandIndex } from '../lib/brand';
 import { TrendingUp, Shield } from './Icons';
-import { frictionClasses } from '../lib/scoreColor';
+import { brandClasses } from '../lib/scoreColor';
 import { SHOW_OPTIMIZED_IVR } from '../lib/config';
 
 interface Props {
@@ -24,10 +24,9 @@ function Card({
   narrative: string;
   tagline: string[];
 }) {
-  // Brand Damage is high-is-bad, same direction as friction, so the
-  // friction color band applies directly: 80+ red, 60-79 pink, 40-59
-  // yellow, 20-39 blue, <20 green.
-  const c = frictionClasses(index.score);
+  // Brand Reputation is high-is-good, so brandBand maps it directly:
+  // 80+ green, 60-79 blue, 40-59 yellow, 20-39 pink, <20 red.
+  const c = brandClasses(index.score);
 
   return (
     <div
@@ -98,12 +97,11 @@ export default function BrandImpact({
   recommendedNarrative,
   voiceAgentNarrative,
 }: Props) {
-  // High = worse, so the "win" is current minus voice (positive = damage
-  // removed). Voice should be lower than current; if for some reason it
-  // isn't, format with a "+N" prefix so the negative case doesn't render
-  // as the malformed "−-N pts".
-  const delta = current.score - voiceAgent.score;
-  const deltaLabel = delta >= 0 ? `−${delta} pts` : `+${Math.abs(delta)} pts`;
+  // High = better, so the "win" is voice minus current (positive = reputation
+  // gained). If the voice tree somehow scored worse, format with a "−N"
+  // prefix so the negative case doesn't render as the malformed "+-N pts".
+  const delta = voiceAgent.score - current.score;
+  const deltaLabel = delta >= 0 ? `+${delta} pts` : `−${Math.abs(delta)} pts`;
   return (
     <section>
       <div className="flex items-center gap-3 mb-4">
@@ -111,14 +109,11 @@ export default function BrandImpact({
           <Shield size={14} />
         </div>
         <div className="flex-1">
-          <h2 className="text-base font-semibold tracking-tight text-ink">Brand damage</h2>
+          <h2 className="text-base font-semibold tracking-tight text-ink">Brand impact</h2>
           <p className="text-[11px] text-muted leading-snug">
-            How much {university}'s phone tree hurts brand perception today,
-            and how much that damage drops with{' '}
-            {SHOW_OPTIMIZED_IVR
-              ? 'an optimized IVR or a full voice agent.'
-              : 'a full voice agent.'}{' '}
-            Lower is better.
+            How callers perceive {university} based on what their phone tree
+            does to them. {SHOW_OPTIMIZED_IVR ? 'Three stages: today, optimized IVR, full voice agent.' : 'Two stages: today and full voice agent.'}{' '}
+            Higher is better.
           </p>
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-good/10 border border-good/25 text-good">

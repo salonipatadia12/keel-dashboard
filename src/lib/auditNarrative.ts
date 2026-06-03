@@ -94,16 +94,17 @@ export function buildAuditNarrative(args: {
 
   const bullets: AuditBullet[] = [];
 
-  // 1) Friction headline — derived from totals visible at the top of
-  //    each tree panel.
+  // 1) CXI headline — frame the lift in Customer Experience Index terms
+  //    so this bullet reads like the top KPI tile. CXI = 100 − Friction.
+  const cxiToday = 100 - cur.totalScore;
+  const cxiVoice = 100 - va.totalScore;
   bullets.push({
-    topic: 'Cut friction end-to-end',
+    topic: 'Improve the CXI',
     detail: showOptimizedIvr
-      ? `Friction drops from ${cur.totalScore} (${cur.grade}) today to ` +
-        `${rec.totalScore} (${rec.grade}) with the Optimized IVR and ` +
-        `${va.totalScore} (${va.grade}) with the Voice Agent — a ${cur.totalScore - va.totalScore}-point swing visible on the three trees below.`
-      : `Friction drops from ${cur.totalScore} (${cur.grade}) today to ` +
-        `${va.totalScore} (${va.grade}) with the Voice Agent — a ${cur.totalScore - va.totalScore}-point swing visible on the two trees below.`,
+      ? `Improve the CXI score from ${cxiToday} to ${cxiVoice} using a Conversational AI Voice Agent to triage calls and answer callers. ` +
+        `That's a ${cxiVoice - cxiToday}-point lift in your IVR Customer Experience Index — the trees below show every node behind the change.`
+      : `Improve the CXI score from ${cxiToday} to ${cxiVoice} using a Conversational AI Voice Agent to triage calls and answer callers. ` +
+        `That's a ${cxiVoice - cxiToday}-point lift in your IVR Customer Experience Index — the trees below show every node behind the change.`,
   });
 
   // 2) Flatten the menu — uses the actual unique level-0 count and the

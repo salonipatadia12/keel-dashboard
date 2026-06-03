@@ -280,7 +280,7 @@ export default function App() {
         }}
       />
 
-      <main className="max-w-[1440px] mx-auto px-8 py-7">
+      <main className="max-w-[1200px] mx-auto px-8 py-7">
         {/* Page tabs */}
         <div className="mb-6 flex items-center justify-between border-b border-line">
           <nav className="flex items-end gap-2">

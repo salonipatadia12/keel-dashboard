@@ -86,11 +86,38 @@ export default function MetricCards({
   const ivrCovered = Math.round(recommended.selfServiceCoverage * Q);
   const voiceCovered = Math.round(voiceAgent.selfServiceCoverage * Q);
 
-  const frictionDelta = current.totalScore - voiceAgent.totalScore;
-  // Brand Damage is high-is-bad, so the win is current minus voice
-  // (positive = damage removed).
-  const brandDelta = brandCurrent.score - brandVoice.score;
+  // CXI = Customer Experience Index = 100 − Friction (high=good).
+  // Pre-compute once so the tile and the delta can't drift.
+  const cxiToday = 100 - current.totalScore;
+  const cxiIvr = 100 - recommended.totalScore;
+  const cxiVoice = 100 - voiceAgent.totalScore;
+  const cxiDelta = cxiVoice - cxiToday; // positive = improvement
+  // Brand Reputation is high=good, so the win is voice minus current
+  // (positive = reputation gained).
+  const brandDelta = brandVoice.score - brandCurrent.score;
   const coverageDelta = voiceCovered - todayQuestionsCovered;
+
+  // CXI grade — matches the brandBand thresholds so the label and the
+  // color of the cell always agree.
+  const cxiGrade = (v: number) =>
+    v >= 80
+      ? 'Excellent'
+      : v >= 60
+        ? 'Strong'
+        : v >= 40
+          ? 'Average'
+          : v >= 20
+            ? 'Poor'
+            : 'Critical';
+
+  const cxiFormula =
+    `CXI · Customer Experience Index = 100 − Friction Score\n` +
+    `(high = good. 100 is best-in-class; <20 is critical.)\n\n` +
+    `Today    = 100 − ${current.totalScore} = ${cxiToday}\n` +
+    `Voice AI = 100 − ${voiceAgent.totalScore} = ${cxiVoice}\n\n` +
+    `Friction is computed from menu depth, dead-end rate, wait time,\n` +
+    `clarity, and unreachable %. See the tree panels below for the\n` +
+    `node-level reason each score lands where it does.`;
 
   const coverageFormula =
     `Coverage = student questions answered without a human / ${Q} typical questions tracked\n\n` +
@@ -140,24 +167,25 @@ export default function MetricCards({
         <KpiTile
           hideIvr={hideIvr}
           icon={<Activity size={14} />}
-          label="Friction Score"
+          label="CXI · Customer Experience Index"
           today={{
-            value: current.totalScore,
-            caption: current.grade,
-            band: frictionBand(current.totalScore),
+            value: cxiToday,
+            caption: cxiGrade(cxiToday),
+            band: brandBand(cxiToday),
           }}
           ivr={{
-            value: recommended.totalScore,
-            caption: recommended.grade,
-            band: frictionBand(recommended.totalScore),
+            value: cxiIvr,
+            caption: cxiGrade(cxiIvr),
+            band: brandBand(cxiIvr),
           }}
           voice={{
-            value: voiceAgent.totalScore,
-            caption: voiceAgent.grade,
-            band: frictionBand(voiceAgent.totalScore),
+            value: cxiVoice,
+            caption: cxiGrade(cxiVoice),
+            band: brandBand(cxiVoice),
           }}
-          delta={{ value: `down ${frictionDelta} pts`, tone: 'good' }}
+          delta={{ value: `up ${cxiDelta} pts`, tone: 'good' }}
           emphasis
+          formula={cxiFormula}
         />
         <KpiTile
           hideIvr={hideIvr}
@@ -210,23 +238,23 @@ export default function MetricCards({
         <KpiTile
           hideIvr={hideIvr}
           icon={<Sparkles size={14} />}
-          label="Brand Damage"
+          label="Brand Reputation"
           today={{
             value: brandCurrent.score,
             caption: brandCurrent.label,
-            band: frictionBand(brandCurrent.score),
+            band: brandBand(brandCurrent.score),
           }}
           ivr={{
             value: brandRecommended.score,
             caption: brandRecommended.label,
-            band: frictionBand(brandRecommended.score),
+            band: brandBand(brandRecommended.score),
           }}
           voice={{
             value: brandVoice.score,
             caption: brandVoice.label,
-            band: frictionBand(brandVoice.score),
+            band: brandBand(brandVoice.score),
           }}
-          delta={{ value: `down ${brandDelta} pts`, tone: 'good' }}
+          delta={{ value: `up ${brandDelta} pts`, tone: 'good' }}
           emphasis
           formula={brandFormula}
         />
