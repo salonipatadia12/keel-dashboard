@@ -20,6 +20,12 @@ export const ArrowRight = ({ size, className }: IconProps) => (
   </svg>
 );
 
+export const ArrowLeft = ({ size, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M19 12H5M11 19l-7-7 7-7" />
+  </svg>
+);
+
 export const ArrowDown = ({ size, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="M12 5v14M5 13l7 7 7-7" />

@@ -18,6 +18,8 @@ import BrandImpact from './components/BrandImpact';
 import Pitch from './components/Pitch';
 import UniversitySelector from './components/UniversitySelector';
 import CohortComparison, { type CohortRow } from './components/CohortComparison';
+import ParentLanding, { type ParentCard } from './components/ParentLanding';
+import ParentOverview, { type ChildSummary } from './components/ParentOverview';
 import { Activity } from './components/Icons';
 import { SHOW_OPTIMIZED_IVR } from './lib/config';
 
@@ -197,8 +199,36 @@ export default function App() {
   );
   const [page, setPage] = useState<Page>('report');
 
+  // Parent-org drill-down state. null = workspace landing (parent grid);
+  // 'tusd' = inside TUSD context (overview + child list, or one child's
+  // report when activeId points to that child). Only meaningful in
+  // workspaces that have multi-campus parents — universities currently
+  // have no parentOrg set, so this stays null there.
+  const [activeParentOrg, setActiveParentOrg] = useState<string | null>(null);
+  // True when the parent org is selected but no specific child has been
+  // clicked — render the rollup overview. False when a child is in focus
+  // and we render the tenant report (with a parent breadcrumb).
+  const [showOverview, setShowOverview] = useState(false);
+
+  // Parents = unique parentOrg ids in the active workspace. A parent with
+  // 1 child is "standalone" — clicking its card bypasses the rollup and
+  // goes straight to the child report.
+  const parentGroups = useMemo(() => {
+    const map = new Map<string, UniversityData[]>();
+    for (const u of universities) {
+      const key = u.parentOrg ?? null;
+      if (!key) continue; // skip universities with no parentOrg (flat tenants)
+      const list = map.get(key) ?? [];
+      list.push(u);
+      map.set(key, list);
+    }
+    return map;
+  }, [universities]);
+  const hasParentGroups = parentGroups.size > 0;
+
   // Whenever the workspace changes, snap activeId back to the first tenant
-  // in that workspace so the report below is always valid.
+  // and reset the parent-org context so the user lands on the workspace
+  // landing again.
   const firstInWorkspace = universities[0]?.id ?? 'unknown';
   if (
     universities.length > 0 &&
@@ -207,6 +237,8 @@ export default function App() {
     // running this during render is fine — state setter call is queued and
     // re-renders without an extra effect.
     setActiveId(firstInWorkspace);
+    setActiveParentOrg(null);
+    setShowOverview(false);
   }
   // Workspaces with a single tenant don't have a Rankings page (cohort
   // comparison needs more than one row). If the user lands on Rankings then
@@ -245,6 +277,98 @@ export default function App() {
     );
   }, [cohortRows]);
   const activeHasNoIvr = NO_IVR_IDS.has(active.id);
+
+  // Parent-landing data: one card per parent org in the workspace, with
+  // aggregated CXI averages across its children.
+  const parentCards = useMemo<ParentCard[]>(() => {
+    const cards: ParentCard[] = [];
+    for (const [parentOrg, kids] of parentGroups.entries()) {
+      const scored = kids.filter((k) => !NO_IVR_IDS.has(k.id));
+      const cxiToday = (id: string) => {
+        const row = cohortRows.find((r) => r.id === id);
+        if (!row) return 0;
+        return Math.max(0, Math.min(100, 100 - row.currentScore));
+      };
+      const cxiVoice = (id: string) => {
+        const row = cohortRows.find((r) => r.id === id);
+        if (!row) return 0;
+        return Math.max(0, Math.min(100, 100 - row.voiceAgentScore));
+      };
+      const avgCxiToday =
+        scored.length > 0
+          ? scored.reduce((s, k) => s + cxiToday(k.id), 0) / scored.length
+          : 0;
+      const avgCxiVoice =
+        scored.length > 0
+          ? scored.reduce((s, k) => s + cxiVoice(k.id), 0) / scored.length
+          : 0;
+      // Parent label = district-office display name stripped of the
+      // " — District Office" suffix, falling back to the first child's
+      // name (for single-school orgs like Pacifica).
+      const districtChild = kids.find((k) => k.childKind === 'district-office');
+      const parentLabel = districtChild
+        ? districtChild.name.replace(/\s+[—-]\s+District Office\s*$/i, '')
+        : kids[0]?.name ?? 'Organization';
+      cards.push({
+        parentOrg,
+        parentLabel,
+        childCount: kids.length,
+        standaloneChildId: kids.length === 1 ? kids[0].id : undefined,
+        avgCxiToday,
+        avgCxiVoice,
+        childrenSummaries: kids.map((k) => ({
+          id: k.id,
+          name: k.name,
+          childKind: k.childKind ?? null,
+        })),
+      });
+    }
+    return cards;
+  }, [parentGroups, cohortRows]);
+
+  // Children of the currently-selected parent (for ParentOverview).
+  const parentChildren = useMemo<ChildSummary[]>(() => {
+    if (!activeParentOrg) return [];
+    const kids = parentGroups.get(activeParentOrg) ?? [];
+    return kids.map((k) => {
+      const v = buildView(k);
+      return {
+        id: k.id,
+        name: k.name,
+        childKind: k.childKind ?? null,
+        currentScore: v.currentFriction.totalScore,
+        voiceAgentScore: v.voiceAgent.friction.totalScore,
+        todayWaitSec: v.currentFriction.avgDurationSec ?? 0,
+        voiceWaitSec: v.voiceAgent.friction.avgDurationSec ?? 0,
+        maxDepth: v.currentFriction.maxDepth,
+        hasNoIvr: NO_IVR_IDS.has(k.id),
+      };
+    });
+  }, [activeParentOrg, parentGroups]);
+
+  // Routing decisions for the Report page. Three modes:
+  //   - "landing": workspace has multi-campus parents and none is selected.
+  //   - "overview": a multi-campus parent IS selected and showOverview is on
+  //     — render the rollup.
+  //   - "tenant":  one tenant's individual report (the existing flow).
+  //
+  // Universities workspace has no parentOrg today, so hasParentGroups is
+  // false there and viewMode falls through to "tenant" unchanged.
+  type ViewMode = 'landing' | 'overview' | 'tenant';
+  let viewMode: ViewMode = 'tenant';
+  if (page === 'report') {
+    if (hasParentGroups && activeParentOrg === null) viewMode = 'landing';
+    else if (
+      activeParentOrg !== null &&
+      (parentGroups.get(activeParentOrg)?.length ?? 0) > 1 &&
+      showOverview
+    )
+      viewMode = 'overview';
+  }
+  const activeParentLabel = activeParentOrg
+    ? (parentCards.find((c) => c.parentOrg === activeParentOrg)?.parentLabel ??
+      'Organization')
+    : null;
 
   const {
     universityName,
@@ -307,8 +431,76 @@ export default function App() {
           </div>
         </div>
 
-        {page === 'report' && (
+        {/* Parent landing — workspace has multi-campus parents and none is
+            selected. Click a parent card to drill in. */}
+        {page === 'report' && viewMode === 'landing' && (
+          <ParentLanding
+            workspaceLabel={activeWorkspace.label}
+            workspaceCaption={activeWorkspace.audienceCaption}
+            cards={parentCards}
+            onSelectParent={(orgId, standaloneChildId) => {
+              setActiveParentOrg(orgId);
+              if (standaloneChildId) {
+                // Standalone parent (1 child) — jump straight to the
+                // tenant report; the parent context still drives the
+                // breadcrumb but there's no rollup to show.
+                setActiveId(standaloneChildId);
+                setShowOverview(false);
+              } else {
+                setShowOverview(true);
+              }
+            }}
+          />
+        )}
+
+        {/* Parent overview — rollup of children for a multi-campus parent.
+            Click a child to enter its individual report. */}
+        {page === 'report' && viewMode === 'overview' && activeParentOrg && (
+          <ParentOverview
+            parentLabel={activeParentLabel ?? 'Organization'}
+            workspaceLabel={activeWorkspace.label}
+            children={parentChildren}
+            onSelectChild={(childId) => {
+              setActiveId(childId);
+              setShowOverview(false);
+            }}
+            onBack={() => {
+              setActiveParentOrg(null);
+              setShowOverview(false);
+            }}
+          />
+        )}
+
+        {page === 'report' && viewMode === 'tenant' && (
           <>
+        {/* Breadcrumb when we're inside a multi-campus parent context. */}
+        {activeParentOrg && activeParentLabel && (parentGroups.get(activeParentOrg)?.length ?? 0) > 1 && (
+          <div className="mb-3 flex items-center gap-1.5 text-[12px] text-muted">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveParentOrg(null);
+                setShowOverview(false);
+              }}
+              className="hover:text-ink2 transition"
+            >
+              {activeWorkspace.label}
+            </button>
+            <span className="text-line2">/</span>
+            <button
+              type="button"
+              onClick={() => setShowOverview(true)}
+              className="font-semibold text-ink2 hover:text-ink underline-offset-2 hover:underline transition"
+            >
+              {activeParentLabel}
+            </button>
+            <span className="text-line2">/</span>
+            <span className="text-ink2">
+              {shortLabel(active.name).replace(/^.*?\s+[—-]\s+/, '')}
+            </span>
+          </div>
+        )}
+
         {/* University selector — dropdown with search, sorted by friction */}
         {universities.length > 1 && (
           <div className="mb-5 flex items-center">
