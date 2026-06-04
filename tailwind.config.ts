@@ -45,9 +45,15 @@ export default {
         // that red instantly reads as "bad" at a glance and yields AA
         // contrast (≥4.5:1) against white text.
         band_red_dark: '#b91c1c',
-        band_pink: '#db2777',
-        band_pink_soft: '#fce7f3',
-        band_pink_dark: '#be185d',
+        // Pink band sits one notch below red on the severity scale. Originally
+        // pure magenta (#db2777 / #be185d), which read as a *different* color
+        // family from red and made the CXI cells look "off" next to the pitch
+        // sentence's solid red. Shifted toward a red-leaning crimson so the
+        // 20-39 band reads as "deep red, just slightly less alarming than 80+"
+        // — same color family as band_red, still distinguishable.
+        band_pink: '#c92434',
+        band_pink_soft: '#fde2e4',
+        band_pink_dark: '#a01d2a',
         band_yellow: '#b45309',
         band_yellow_soft: '#fef3c7',
         band_yellow_dark: '#92400e',

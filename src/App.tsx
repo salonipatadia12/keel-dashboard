@@ -494,8 +494,8 @@ export default function App() {
         <Pitch
           university={shortName}
           currentScore={currentFriction.totalScore}
-          recommendedScore={recommended.friction.totalScore}
           voiceAgentScore={voiceAgent.friction.totalScore}
+          voiceCoverage={voiceAgent.friction.selfServiceCoverage}
         />
           </>
         )}

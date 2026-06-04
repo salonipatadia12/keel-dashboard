@@ -1,5 +1,5 @@
 import type { FrictionResult } from '../lib/types';
-import { frictionClasses } from '../lib/scoreColor';
+import { brandClasses } from '../lib/scoreColor';
 
 export interface CohortRow {
   id: string;
@@ -20,9 +20,14 @@ function shortLabel(name: string): string {
   return name.split(',')[0];
 }
 
-// Map friction score → shared band pill classes for the "Drop" badge.
-function dropBadgeClasses(score: number) {
-  const c = frictionClasses(score);
+// CXI = 100 − friction. The ranking page reads in CXI everywhere so it
+// matches the KPI tile direction (high=good).
+const cxi = (frictionScore: number) =>
+  Math.max(0, Math.min(100, 100 - frictionScore));
+
+// CXI-band pill classes — brandClasses already maps high=good.
+function cxiBadgeClasses(cxiScore: number) {
+  const c = brandClasses(cxiScore);
   return { bg: c.pillBg, text: c.pillText, border: c.pillBorder };
 }
 
@@ -33,29 +38,32 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
   const ivrRows = rows.filter((r) => !r.hasNoIvr);
   const noIvrRows = rows.filter((r) => r.hasNoIvr);
 
-  // Sort by current friction descending (worst first — matches pitch narrative).
-  const sorted = [...ivrRows].sort((a, b) => b.currentScore - a.currentScore);
+  // Sort by CXI ascending (worst lines first). CXI = 100 − friction, so
+  // ascending CXI is the same order as descending friction — matches the
+  // "lead with the most-broken IVR" pitch flow.
+  const sorted = [...ivrRows].sort(
+    (a, b) => cxi(a.currentScore) - cxi(b.currentScore)
+  );
 
-  // Cohort stats for the summary line. Computed across the scored cohort
-  // only so a uni with no IVR doesn't pull the averages down with a
-  // calculated-from-empty-tree score.
-  const avgCurrent =
+  // Cohort stats — surfaced in CXI so the summary line direction matches
+  // the rows below (high=good, ascending = worst first).
+  const avgCxiToday =
     sorted.length > 0
-      ? sorted.reduce((s, r) => s + r.currentScore, 0) / sorted.length
+      ? sorted.reduce((s, r) => s + cxi(r.currentScore), 0) / sorted.length
       : 0;
-  const avgVoice =
+  const avgCxiVoice =
     sorted.length > 0
-      ? sorted.reduce((s, r) => s + r.voiceAgentScore, 0) / sorted.length
+      ? sorted.reduce((s, r) => s + cxi(r.voiceAgentScore), 0) / sorted.length
       : 0;
-  const avgDrop = avgCurrent - avgVoice;
+  const avgLift = avgCxiVoice - avgCxiToday;
   const activeRow = sorted.find((r) => r.id === activeId);
   const activeRank = activeRow
     ? sorted.findIndex((r) => r.id === activeId) + 1
     : null;
 
-  // The bar treats friction as a 0-100 scale where higher = worse, so the
-  // current bar takes up most of the row and the voice-agent bar is a thin
-  // green wedge at the left — visually reinforcing the gap.
+  // CXI lives on a 0-100 scale (high=good). Bar width reads the CXI value
+  // directly, so a CXI-10 row shows a tiny bar (lots of room to improve)
+  // and a CXI-90 voice-agent overlay nearly fills it (best in class).
   const SCALE = 100;
   const pct = (n: number) => `${Math.max(2, Math.round((n / SCALE) * 100))}%`;
 
@@ -71,12 +79,12 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
             </span>
           </div>
           <h2 className="text-3xl font-semibold tracking-tight text-ink mb-2">
-            Cohort comparison · {rows.length} universities audited
+            Cohort comparison · {rows.length} tenants audited
           </h2>
           <p className="text-[15px] text-muted leading-snug max-w-2xl">
-            {sorted.length} of {rows.length} universities run an IVR — the
-            scored cohort lands consistently in the friction-heavy band, with
-            a 50-70 point gap between today's IVR and a voice agent.{' '}
+            {sorted.length} of {rows.length} tenants run an IVR — the
+            scored cohort lands consistently in the low-CXI band, with a
+            50-70 point lift between today's IVR and a voice agent.{' '}
             {noIvrRows.length > 0 &&
               `The remaining ${noIvrRows.length} route calls straight to a person (or that person's voicemail) — no IVR to score.`}
           </p>
@@ -114,22 +122,22 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
       {/* Cohort summary strip */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <Stat
-          label="Cohort avg today"
-          value={Math.round(avgCurrent)}
+          label="Cohort avg CXI today"
+          value={Math.round(avgCxiToday)}
           tone="bad"
           suffix="/100"
         />
         <Stat
-          label="Cohort avg with voice agent"
-          value={Math.round(avgVoice)}
+          label="Cohort avg CXI with voice agent"
+          value={Math.round(avgCxiVoice)}
           tone="good"
           suffix="/100"
         />
         <Stat
-          label="Avg friction removed"
-          value={Math.round(avgDrop)}
+          label="Avg CXI lift"
+          value={Math.round(avgLift)}
           tone="accent"
-          prefix="−"
+          prefix="+"
           suffix=" pts"
         />
       </div>
@@ -138,19 +146,21 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
       <div className="space-y-1.5">
         {/* Scale header */}
         <div className="grid grid-cols-[240px_1fr_80px] gap-4 px-2 pb-2 text-[12px] uppercase tracking-[0.14em] text-muted font-semibold">
-          <span>University</span>
-          <span>Today (red) → Voice agent (green)</span>
-          <span className="text-right">Drop</span>
+          <span>Tenant</span>
+          <span>Today CXI (red) → Voice agent CXI (green)</span>
+          <span className="text-right">Lift</span>
         </div>
 
         {sorted.map((r) => {
           const isActive = r.id === activeId;
-          const drop = r.currentScore - r.voiceAgentScore;
-          const colors = dropBadgeClasses(r.currentScore);
-          // Bar fill bands the row by friction. Voice-agent overlay
-          // always uses the "best" band since projections land <20.
-          const currentBar = frictionClasses(r.currentScore);
-          const voiceBar = frictionClasses(r.voiceAgentScore);
+          const cxiToday = cxi(r.currentScore);
+          const cxiVoice = cxi(r.voiceAgentScore);
+          const lift = cxiVoice - cxiToday;
+          const colors = cxiBadgeClasses(cxiToday);
+          // Bar fill bands the row by CXI. Voice-agent overlay almost
+          // always lands in the "best" band since projections > 80.
+          const todayBar = brandClasses(cxiToday);
+          const voiceBar = brandClasses(cxiVoice);
 
           return (
             <button
@@ -186,28 +196,30 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
 
               {/* Bar */}
               <div className="relative h-9 rounded-md bg-bg/60 border border-line overflow-hidden">
-                {/* Current friction — colored by band (red ≥80, pink, etc.) */}
+                {/* Voice agent CXI — colored by its own band (almost
+                    always green). Drawn first/wider; today's narrower
+                    red bar overlays on top so both numbers stay
+                    readable. */}
                 <div
-                  className={`absolute inset-y-0 left-0 ${currentBar.barFill} flex items-center justify-end pr-2.5`}
-                  style={{ width: pct(r.currentScore) }}
+                  className={`absolute inset-y-0 left-0 ${voiceBar.barFill} flex items-center justify-end pr-2.5`}
+                  style={{ width: pct(cxiVoice) }}
                 >
                   <span className="text-[13px] font-bold text-white tabular-nums drop-shadow">
-                    {r.currentScore}
+                    {cxiVoice}
                   </span>
                 </div>
-                {/* Voice agent friction — overlaid at left, colored by its
-                    own band (almost always green at this scale). */}
+                {/* Today CXI — narrower red wedge at the left. */}
                 <div
-                  className={`absolute inset-y-0 left-0 ${voiceBar.barFill} flex items-center justify-end pr-2`}
-                  style={{ width: pct(r.voiceAgentScore) }}
+                  className={`absolute inset-y-0 left-0 ${todayBar.barFill} flex items-center justify-end pr-2`}
+                  style={{ width: pct(cxiToday) }}
                 >
                   <span className="text-[12px] font-bold text-white tabular-nums drop-shadow">
-                    {r.voiceAgentScore}
+                    {cxiToday}
                   </span>
                 </div>
               </div>
 
-              {/* Drop */}
+              {/* Lift */}
               <div className="text-right">
                 <span
                   className={
@@ -219,7 +231,7 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
                     colors.border
                   }
                 >
-                  −{drop}
+                  +{lift}
                 </span>
               </div>
             </button>
@@ -290,10 +302,10 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
 
       <div className="mt-5 pt-4 border-t border-line text-[13px] text-muted flex items-center justify-between flex-wrap gap-2">
         <span>
-          Click any row to open that university's full report.
+          Click any row to open that tenant's full report.
         </span>
         <span className="tabular-nums">
-          sorted by today's friction · highest first
+          sorted by CXI · ascending (worst first)
         </span>
       </div>
     </section>
