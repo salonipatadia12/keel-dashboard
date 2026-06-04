@@ -126,11 +126,29 @@ const SOURCES = [
     childKind: 'high',
     displayName: 'West High',
   },
+  // Pacifica Christian High School — standalone-parent example for the
+  // K-12 workspace. Single-school org, so parentOrg='pacifica-christian'
+  // matches its own id and the parent card collapses straight to the
+  // one campus report (no rollup needed).
+  {
+    id: 'pacifica-christian',
+    file: 'IVR_Pacifica Christian.xlsx',
+    workspace: 'k12-districts',
+    parentOrg: 'pacifica-christian',
+    childKind: 'high-private',
+    displayName: 'Pacifica Christian High School',
+  },
 ];
 
 function findFile(filename) {
+  // Source folders, in order of preference. output_universities/ holds
+  // the university audits; output_k12/ holds the K-12 lines (district
+  // offices, individual schools, single-site privates). Root + pitch/
+  // are kept as fallbacks so a freshly-scraped file can be tested in
+  // place before being moved into its final home.
   const candidates = [
     join(__dirname, '..', '..', 'output_universities', filename),
+    join(__dirname, '..', '..', 'output_k12', filename),
     join(__dirname, '..', '..', filename),
     join(__dirname, '..', filename),
   ];
