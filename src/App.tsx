@@ -20,6 +20,7 @@ import UniversitySelector from './components/UniversitySelector';
 import CohortComparison, { type CohortRow } from './components/CohortComparison';
 import ParentLanding, { type ParentCard } from './components/ParentLanding';
 import ParentOverview, { type ChildSummary } from './components/ParentOverview';
+import BookMeetingCta from './components/BookMeetingCta';
 import { Activity } from './components/Icons';
 import { SHOW_OPTIMIZED_IVR } from './lib/config';
 
@@ -178,15 +179,42 @@ const FALLBACK_WORKSPACES = [
   },
 ];
 
+// Deep-link plumbing. The dashboard's URL is the share artifact for
+// outreach campaigns: hand a CIO a URL with ?tenant=alabama-state and
+// they land directly on their report without scrolling through 28 other
+// universities. We read the param once at mount to seed activeId, and
+// write it back whenever the user navigates so the back-button works.
+function readTenantFromUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('tenant');
+}
+
+function updateUrlForTenant(tenantId: string, workspaceId: string) {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('tenant', tenantId);
+  url.searchParams.set('workspace', workspaceId);
+  window.history.replaceState({}, '', url.toString());
+}
+
 export default function App() {
   const allTenants = data.universities;
   const workspaces =
     data.workspaces && data.workspaces.length > 0
       ? data.workspaces
       : FALLBACK_WORKSPACES;
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState(
-    workspaces[0]?.id ?? 'universities'
-  );
+
+  // Initial state from URL. ?tenant=alabama-state takes priority over
+  // the default first-tenant in workspace.
+  const urlTenantId = readTenantFromUrl();
+  const urlTenant = urlTenantId
+    ? allTenants.find((u) => u.id === urlTenantId)
+    : undefined;
+  const initialWorkspaceId =
+    urlTenant?.workspace ?? workspaces[0]?.id ?? 'universities';
+
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState(initialWorkspaceId);
   const activeWorkspace =
     workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0];
   const universities = useMemo(
@@ -195,7 +223,7 @@ export default function App() {
   );
 
   const [activeId, setActiveId] = useState(
-    universities[0]?.id ?? 'unknown'
+    urlTenant?.id ?? universities[0]?.id ?? 'unknown'
   );
   const [page, setPage] = useState<Page>('report');
 
@@ -204,11 +232,24 @@ export default function App() {
   // report when activeId points to that child). Only meaningful in
   // workspaces that have multi-campus parents — universities currently
   // have no parentOrg set, so this stays null there.
-  const [activeParentOrg, setActiveParentOrg] = useState<string | null>(null);
+  // Deep-link seed: if the URL targets a child of a multi-campus parent,
+  // start inside that parent context with the tenant report (overview off).
+  const [activeParentOrg, setActiveParentOrg] = useState<string | null>(
+    urlTenant?.parentOrg ?? null
+  );
   // True when the parent org is selected but no specific child has been
   // clicked — render the rollup overview. False when a child is in focus
   // and we render the tenant report (with a parent breadcrumb).
   const [showOverview, setShowOverview] = useState(false);
+
+  // Write the active tenant back to the URL whenever it changes so the
+  // current state is shareable + bookmarkable.
+  if (typeof window !== 'undefined') {
+    const currentParam = readTenantFromUrl();
+    if (currentParam !== activeId) {
+      updateUrlForTenant(activeId, activeWorkspaceId);
+    }
+  }
 
   // Parents = unique parentOrg ids in the active workspace. A parent with
   // 1 child is "standalone" — clicking its card bypasses the rollup and
@@ -689,6 +730,11 @@ export default function App() {
           voiceAgentScore={voiceAgent.friction.totalScore}
           voiceCoverage={voiceAgent.friction.selfServiceCoverage}
         />
+
+        {/* Book a meeting — the campaign CTA. */}
+        <div className="mt-5">
+          <BookMeetingCta university={shortName} />
+        </div>
           </>
         )}
 
