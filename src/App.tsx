@@ -5,7 +5,7 @@ import { buildPathTree } from './lib/pathTree';
 import {
   calculateFriction,
   frictionFromSheet,
-  TYPICAL_STUDENT_QUESTIONS,
+  questionListForWorkspace,
 } from './lib/friction';
 import { buildRecommendedTree, buildVoiceAgentTree } from './lib/recommend';
 import { brandNarrative, brandReputationIndex } from './lib/brand';
@@ -78,15 +78,18 @@ function buildView(uni: UniversityData) {
   // self-service coverage of the existing IVR: each `info`-type leaf is
   // assumed to bundle ~3 typical student questions (FAQ pages bundle hours,
   // locations, and procedural answers). Ghost (un-dialed) options don't
-  // count — we have no proof those branches actually deliver info.
+  // count — we have no proof those branches actually deliver info. The
+  // question-list size is workspace-keyed so K-12 lines score against
+  // department reach instead of student questions.
+  const questionList = questionListForWorkspace(uni.workspace);
   const infoLeafCount = built.allNodes.filter(
     (n) => n.outcomeType === 'info' && n.children.length === 0 && !n.isGhost
   ).length;
   const todayQuestionsCovered = Math.min(
-    TYPICAL_STUDENT_QUESTIONS.length,
+    questionList.length,
     infoLeafCount * 3
   );
-  const todayCoverage = todayQuestionsCovered / TYPICAL_STUDENT_QUESTIONS.length;
+  const todayCoverage = todayQuestionsCovered / questionList.length;
 
   // queueOnly: no menu, just a single forced hold queue (Santa Clara pattern).
   // Detect by counting non-repeat tree nodes — if there's at most one and
@@ -390,6 +393,7 @@ export default function App() {
             brandVoice={brandVoice}
             brandFormula={brandFormula}
             todayQuestionsCovered={todayQuestionsCovered}
+            workspaceId={active.workspace ?? 'universities'}
           />
         </div>
 
@@ -404,7 +408,7 @@ export default function App() {
             voiceAgentTree: voiceAgent.tree,
             voiceAgentFriction: voiceAgent.friction,
             todayQuestionsCovered,
-            questionsTotal: TYPICAL_STUDENT_QUESTIONS.length,
+            questionsTotal: questionListForWorkspace(active.workspace ?? 'universities').length,
             hasNoIvr: activeHasNoIvr,
             showOptimizedIvr: SHOW_OPTIMIZED_IVR,
           });

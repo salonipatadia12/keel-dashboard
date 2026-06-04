@@ -1,7 +1,7 @@
 import KpiTile from './KpiTile';
 import type { FrictionResult, Reference } from '../lib/types';
 import type { BrandIndex } from '../lib/brand';
-import { TYPICAL_STUDENT_QUESTIONS } from '../lib/friction';
+import { questionListForWorkspace } from '../lib/friction';
 import { frictionBand, brandBand, type Band } from '../lib/scoreColor';
 import { SHOW_OPTIMIZED_IVR } from '../lib/config';
 import {
@@ -68,6 +68,10 @@ interface Props {
   brandVoice: BrandIndex;
   brandFormula: string;
   todayQuestionsCovered: number;
+  // Workspace id ('universities' | 'k12-districts') — picks the right
+  // question list (student questions vs. K-12 departments) and gates the
+  // K-12-specific UI variant.
+  workspaceId: string;
 }
 
 export default function MetricCards({
@@ -81,8 +85,11 @@ export default function MetricCards({
   brandVoice,
   brandFormula,
   todayQuestionsCovered,
+  workspaceId,
 }: Props) {
-  const Q = TYPICAL_STUDENT_QUESTIONS.length;
+  const questionList = questionListForWorkspace(workspaceId);
+  const isK12 = workspaceId === 'k12-districts';
+  const Q = questionList.length;
   const ivrCovered = Math.round(recommended.selfServiceCoverage * Q);
   const voiceCovered = Math.round(voiceAgent.selfServiceCoverage * Q);
 
@@ -119,10 +126,11 @@ export default function MetricCards({
     `clarity, and unreachable %. See the tree panels below for the\n` +
     `node-level reason each score lands where it does.`;
 
+  const coverageNoun = isK12 ? 'departments' : 'student questions';
   const coverageFormula =
-    `Coverage = student questions answered without a human / ${Q} typical questions tracked\n\n` +
-    'Tracked questions:\n' +
-    TYPICAL_STUDENT_QUESTIONS.map((q, i) => `  ${i + 1}. ${q}`).join('\n');
+    `Coverage = ${coverageNoun} the IVR routes to without a human / ${Q} ${isK12 ? 'departments' : 'typical questions'} tracked\n\n` +
+    `Tracked ${isK12 ? 'departments' : 'questions'}:\n` +
+    questionList.map((q, i) => `  ${i + 1}. ${q}`).join('\n');
 
   // Wait Time tile values
   const todayWait = current.avgDurationSec ?? 0;
@@ -187,31 +195,68 @@ export default function MetricCards({
           emphasis
           formula={cxiFormula}
         />
-        <KpiTile
-          hideIvr={hideIvr}
-          icon={<HelpCircle size={14} />}
-          label="Question Coverage"
-          today={{
-            value: `${todayQuestionsCovered} of ${Q}`,
-            caption: todayQuestionsCovered === 0 ? 'all need human' : 'partial',
-            band: coverageBand(todayQuestionsCovered, Q),
-          }}
-          ivr={{
-            value: `${ivrCovered} of ${Q}`,
-            caption: ivrCovered > todayQuestionsCovered
-              ? '+FAQ leaf'
-              : 'preserves today',
-            band: coverageBand(ivrCovered, Q),
-          }}
-          voice={{
-            value: `${voiceCovered} of ${Q}`,
-            caption: 'AI self resolves',
-            band: coverageBand(voiceCovered, Q),
-          }}
-          delta={{ value: `up ${coverageDelta} answered`, tone: 'good' }}
-          emphasis
-          formula={coverageFormula}
-        />
+        {isK12 ? (
+          // K-12 swap: department coverage is noisy without normalized data
+          // (Saloni's call). Replace with the 24/7 availability story which
+          // is the actual K-12 talking point — phone line should match what
+          // families can read on the website any time of day.
+          <KpiTile
+            hideIvr={hideIvr}
+            icon={<HelpCircle size={14} />}
+            label="Always Available"
+            today={{
+              value: 'Office hours',
+              caption: 'humans needed',
+              band: 'red',
+            }}
+            ivr={{
+              value: 'Office hours',
+              caption: 'menu + humans',
+              band: 'red',
+            }}
+            voice={{
+              value: '24 / 7',
+              caption: 'AI answers any time',
+              band: 'green',
+            }}
+            delta={{ value: 'always on', tone: 'good' }}
+            emphasis
+            formula={
+              `Always Available = hours the line can actually answer a caller.\n\n` +
+              `Today: humans only. Outside office hours the call hits voicemail\n` +
+              `or goes unanswered — families with after-hours questions get nothing.\n\n` +
+              `Voice Agent: 24 / 7. Same answers the front office gives during\n` +
+              `the day, available the moment a parent calls. The phone line\n` +
+              `finally matches what the website says at 8 PM on a Sunday.`
+            }
+          />
+        ) : (
+          <KpiTile
+            hideIvr={hideIvr}
+            icon={<HelpCircle size={14} />}
+            label="Question Coverage"
+            today={{
+              value: `${todayQuestionsCovered} of ${Q}`,
+              caption: todayQuestionsCovered === 0 ? 'all need human' : 'partial',
+              band: coverageBand(todayQuestionsCovered, Q),
+            }}
+            ivr={{
+              value: `${ivrCovered} of ${Q}`,
+              caption: ivrCovered > todayQuestionsCovered
+                ? '+FAQ leaf'
+                : 'preserves today',
+              band: coverageBand(ivrCovered, Q),
+            }}
+            voice={{
+              value: `${voiceCovered} of ${Q}`,
+              caption: 'AI self resolves',
+              band: coverageBand(voiceCovered, Q),
+            }}
+            delta={{ value: `up ${coverageDelta} answered`, tone: 'good' }}
+            emphasis
+            formula={coverageFormula}
+          />
+        )}
         <KpiTile
           hideIvr={hideIvr}
           icon={<Phone size={14} />}

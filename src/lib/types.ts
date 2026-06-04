@@ -116,6 +116,15 @@ export interface UniversityData {
   // Workspace bucket this tenant belongs to (e.g. 'universities',
   // 'k12-districts'). Lets one deployed app host multiple audit verticals.
   workspace: string;
+  // Parent-org id when this tenant is one campus inside a larger group
+  // (district, system). Multiple tenants sharing a parentOrg are rendered
+  // as siblings under the same parent card in the workspace landing view.
+  // null = standalone parent (its own one-school org).
+  parentOrg?: string | null;
+  // Campus type — district-office | elementary | middle | high | adult |
+  // preschool | high-school (private). Used to label children in the group
+  // view; null for standalone parents.
+  childKind?: string | null;
   universityList: UniversityListRow[];
   overview: OverviewRow[];
   menuMapping: MenuItemRow[];

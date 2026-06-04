@@ -41,6 +41,34 @@ export const TYPICAL_STUDENT_QUESTIONS = [
   'Advisor and department contact info',
 ] as const;
 
+// K-12 lines route by office/department rather than by student intent.
+// We score "department reach" — how many of these the IVR can route a
+// caller to without help — rather than question coverage. The list comes
+// from Saloni's K-12 walkthrough; it's a measurement, not a script.
+export const TYPICAL_K12_DEPARTMENTS = [
+  'Attendance / Absence',
+  'Front Desk',
+  'Admissions',
+  'Registrar',
+  'Business & Finance',
+  'Counselor',
+  'Executive Office',
+  'School / District Directory',
+  'Health Office',
+  'Address & Directions',
+  'Main Office',
+  'Activities',
+  'Athletics Department',
+  'Dean of Students',
+] as const;
+
+// Workspace-keyed lookup so every consumer (KPI tile denominator, audit
+// narrative, formula tooltip) picks the right list automatically.
+export function questionListForWorkspace(workspaceId: string): readonly string[] {
+  if (workspaceId === 'k12-districts') return TYPICAL_K12_DEPARTMENTS;
+  return TYPICAL_STUDENT_QUESTIONS;
+}
+
 // Convert a row from the Friction Score sheet (WorkflowC output) into the
 // FrictionResult shape the dashboard consumes. WorkflowC is the production
 // scorer — we trust its numbers when the row exists.

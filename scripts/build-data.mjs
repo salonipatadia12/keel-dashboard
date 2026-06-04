@@ -58,11 +58,73 @@ const SOURCES = [
   { id: 'northwestern', file: 'IVR_Northwestern.xlsx', workspace: 'universities' },
   { id: 'uchicago', file: 'IVR_UChicago.xlsx', workspace: 'universities' },
   { id: 'alabama-state', file: 'IVR_Alabama State University.xlsx', workspace: 'universities' },
+  // Torrance Unified School District — the parent org. District office + 7
+  // campuses, each scraped as its own tenant. Sharing parentOrg='tusd'
+  // lets the K12 workspace render them as one parent card that drills
+  // into the 8-child rollup view.
   {
     id: 'tusd',
     file: 'IVR_Torrance_USD.xlsx',
     workspace: 'k12-districts',
-    displayName: 'Torrance Unified School District',
+    parentOrg: 'tusd',
+    childKind: 'district-office',
+    displayName: 'Torrance USD — District Office',
+  },
+  {
+    id: 'tusd-adams-elementary',
+    file: 'IVR_Adams Elementary.xlsx',
+    workspace: 'k12-districts',
+    parentOrg: 'tusd',
+    childKind: 'elementary',
+    displayName: 'Adams Elementary',
+  },
+  {
+    id: 'tusd-calle-mayor-middle',
+    file: 'IVR_Calle Mayor Middle.xlsx',
+    workspace: 'k12-districts',
+    parentOrg: 'tusd',
+    childKind: 'middle',
+    displayName: 'Calle Mayor Middle',
+  },
+  {
+    id: 'tusd-casimir-middle',
+    file: 'IVR_Casimir Middle.xlsx',
+    workspace: 'k12-districts',
+    parentOrg: 'tusd',
+    childKind: 'middle',
+    displayName: 'Casimir Middle',
+  },
+  {
+    id: 'tusd-jefferson-middle',
+    file: 'IVR_Jefferson Middle.xlsx',
+    workspace: 'k12-districts',
+    parentOrg: 'tusd',
+    childKind: 'middle',
+    displayName: 'Jefferson Middle',
+  },
+  {
+    id: 'tusd-north-high',
+    file: 'IVR_North High.xlsx',
+    workspace: 'k12-districts',
+    parentOrg: 'tusd',
+    childKind: 'high',
+    displayName: 'North High',
+  },
+  {
+    id: 'tusd-torrance-high',
+    file: 'IVR_Torrance High.xlsx',
+    workspace: 'k12-districts',
+    parentOrg: 'tusd',
+    childKind: 'high',
+    displayName: 'Torrance High',
+  },
+  {
+    id: 'tusd-west-high',
+    file: 'IVR_West High.xlsx',
+    workspace: 'k12-districts',
+    parentOrg: 'tusd',
+    childKind: 'high',
+    displayName: 'West High',
   },
 ];
 
@@ -75,7 +137,7 @@ function findFile(filename) {
   return candidates.find(existsSync);
 }
 
-function parseSource({ id, file, workspace, displayName }) {
+function parseSource({ id, file, workspace, displayName, parentOrg, childKind }) {
   const path = findFile(file);
   if (!path) {
     console.warn(`build-data: ${file} not found, skipping`);
@@ -104,6 +166,8 @@ function parseSource({ id, file, workspace, displayName }) {
     id,
     source: file,
     workspace: workspace || 'universities',
+    parentOrg: parentOrg || null,
+    childKind: childKind || null,
     name,
     phone: uni.phone ? String(uni.phone) : '',
     universityList: rewriteJoin(universityList),
