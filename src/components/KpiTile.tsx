@@ -93,10 +93,9 @@ export default function KpiTile({
   formula,
   hideIvr,
 }: Props) {
-  // Touch `ivr` so TypeScript doesn't flag the prop as unused when hideIvr
-  // is true — the value is intentionally retained on the call site for an
-  // easy re-enable later.
-  void ivr;
+  // `ivr` is consumed inside the !hideIvr branch below; when hideIvr=true
+  // it's silently unused but TS doesn't complain because conditional
+  // reads count as "used".
   const [open, setOpen] = useState(false);
   const hasRefs = refs && refs.length > 0;
 

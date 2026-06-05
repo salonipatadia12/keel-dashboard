@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import raw from './data.json';
 import type { RawData, UniversityData } from './lib/types';
 import { buildPathTree } from './lib/pathTree';
@@ -7,6 +7,7 @@ import {
   frictionFromSheet,
   questionListForWorkspace,
 } from './lib/friction';
+import { cxi } from './lib/cxi';
 import { buildRecommendedTree, buildVoiceAgentTree } from './lib/recommend';
 import { brandNarrative, brandReputationIndex } from './lib/brand';
 import { computeMenuStats } from './lib/menuStats';
@@ -242,14 +243,21 @@ export default function App() {
   // and we render the tenant report (with a parent breadcrumb).
   const [showOverview, setShowOverview] = useState(false);
 
-  // Write the active tenant back to the URL whenever it changes so the
-  // current state is shareable + bookmarkable.
-  if (typeof window !== 'undefined') {
-    const currentParam = readTenantFromUrl();
-    if (currentParam !== activeId) {
+  // Write the active tenant + workspace back to the URL whenever either
+  // changes so the current state is shareable + bookmarkable. useEffect
+  // (not inline render) — under StrictMode an aborted render still
+  // mutates the URL otherwise, and we also need to sync the workspace
+  // param when a tenant is selected from a different workspace.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (
+      params.get('tenant') !== activeId ||
+      params.get('workspace') !== activeWorkspaceId
+    ) {
       updateUrlForTenant(activeId, activeWorkspaceId);
     }
-  }
+  }, [activeId, activeWorkspaceId]);
 
   // Parents = unique parentOrg ids in the active workspace. A parent with
   // 1 child is "standalone" — clicking its card bypasses the rollup and
@@ -266,6 +274,28 @@ export default function App() {
     return map;
   }, [universities]);
   const hasParentGroups = parentGroups.size > 0;
+
+  // Single source of truth for "user picked tenant X." Anywhere a child
+  // tenant gets selected from the dropdown, Rankings, or anywhere else
+  // needs to ALSO update activeParentOrg (so the K-12 breadcrumb is
+  // correct), reset showOverview (so we render the tenant report not the
+  // parent rollup), and bounce the workspace if the tenant lives in a
+  // different one. Doing this inline in every callsite is where the
+  // viewMode-falls-back-to-landing bug came from.
+  const selectTenant = useCallback(
+    (id: string) => {
+      const tenant = allTenants.find((u) => u.id === id);
+      if (!tenant) return;
+      setActiveId(id);
+      setActiveParentOrg(tenant.parentOrg ?? null);
+      setShowOverview(false);
+      const tenantWorkspace = tenant.workspace ?? 'universities';
+      if (tenantWorkspace !== activeWorkspaceId) {
+        setActiveWorkspaceId(tenantWorkspace);
+      }
+    },
+    [allTenants, activeWorkspaceId]
+  );
 
   // Whenever the workspace changes, snap activeId back to the first tenant
   // and reset the parent-org context so the user lands on the workspace
@@ -290,15 +320,23 @@ export default function App() {
   const active =
     universities.find((u) => u.id === activeId) ?? universities[0];
 
-  const view = useMemo(() => buildView(active), [active]);
+  // buildView() is the expensive call (tree build + friction calc per
+  // tenant). Cache results in one Map per workspace so cohortRows,
+  // parentCards, parentChildren, AND the active tenant view all share
+  // the same per-tenant build. Without this, the cohort + parent paths
+  // re-run buildView for every tenant on every render — O(n × tree size)
+  // for nothing.
+  const viewsByTenant = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof buildView>>();
+    for (const u of universities) m.set(u.id, buildView(u));
+    return m;
+  }, [universities]);
+  const view = viewsByTenant.get(active.id) ?? buildView(active);
 
-  // Compute current + voice-agent friction for every tenant in the active
-  // workspace so the comparison panel can show all rows side by side.
-  // Cheap because friction calc is in-memory tree work — done once per
-  // page load.
+  // Cohort rows derive directly from the cached views.
   const cohortRows = useMemo<CohortRow[]>(() => {
     return universities.map((u) => {
-      const v = buildView(u);
+      const v = viewsByTenant.get(u.id)!;
       return {
         id: u.id,
         name: u.name,
@@ -308,7 +346,7 @@ export default function App() {
         hasNoIvr: NO_IVR_IDS.has(u.id),
       };
     });
-  }, [universities]);
+  }, [universities, viewsByTenant]);
   const selectorScoresById = useMemo(() => {
     return Object.fromEntries(
       cohortRows.map((r) => [
@@ -325,23 +363,18 @@ export default function App() {
     const cards: ParentCard[] = [];
     for (const [parentOrg, kids] of parentGroups.entries()) {
       const scored = kids.filter((k) => !NO_IVR_IDS.has(k.id));
-      const cxiToday = (id: string) => {
+      const cxiFor = (id: string, voice = false) => {
         const row = cohortRows.find((r) => r.id === id);
         if (!row) return 0;
-        return Math.max(0, Math.min(100, 100 - row.currentScore));
-      };
-      const cxiVoice = (id: string) => {
-        const row = cohortRows.find((r) => r.id === id);
-        if (!row) return 0;
-        return Math.max(0, Math.min(100, 100 - row.voiceAgentScore));
+        return cxi(voice ? row.voiceAgentScore : row.currentScore);
       };
       const avgCxiToday =
         scored.length > 0
-          ? scored.reduce((s, k) => s + cxiToday(k.id), 0) / scored.length
+          ? scored.reduce((s, k) => s + cxiFor(k.id), 0) / scored.length
           : 0;
       const avgCxiVoice =
         scored.length > 0
-          ? scored.reduce((s, k) => s + cxiVoice(k.id), 0) / scored.length
+          ? scored.reduce((s, k) => s + cxiFor(k.id, true), 0) / scored.length
           : 0;
       // Parent label = district-office display name stripped of the
       // " — District Office" suffix, falling back to the first child's
@@ -548,7 +581,7 @@ export default function App() {
             <UniversitySelector
               universities={universities}
               activeId={active.id}
-              onSelect={setActiveId}
+              onSelect={selectTenant}
               scoresById={selectorScoresById}
             />
           </div>
@@ -744,7 +777,7 @@ export default function App() {
             rows={cohortRows}
             activeId={active.id}
             onSelect={(id) => {
-              setActiveId(id);
+              selectTenant(id);
               setPage('report');
             }}
           />

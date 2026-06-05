@@ -1,8 +1,6 @@
 import { brandClasses } from '../lib/scoreColor';
+import { cxi } from '../lib/cxi';
 import { ArrowRight, ArrowLeft, Layers } from './Icons';
-
-const cxi = (frictionScore: number) =>
-  Math.max(0, Math.min(100, 100 - frictionScore));
 
 function fmtDuration(sec: number): string {
   if (!Number.isFinite(sec) || sec <= 0) return '—';

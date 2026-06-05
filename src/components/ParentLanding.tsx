@@ -1,11 +1,9 @@
-import type { UniversityData } from '../lib/types';
 import { brandClasses } from '../lib/scoreColor';
 import { ArrowRight, Layers } from './Icons';
 
-// CXI = 100 − Friction. Parent-landing reads in CXI throughout to match
-// the KPI tile direction (high=good).
-const cxi = (frictionScore: number) =>
-  Math.max(0, Math.min(100, 100 - frictionScore));
+// CXI math (100 − friction) is applied upstream in App.tsx via the shared
+// lib/cxi helper, so this component just consumes the precomputed
+// avgCxiToday / avgCxiVoice values from props.
 
 export interface ParentCard {
   parentOrg: string;

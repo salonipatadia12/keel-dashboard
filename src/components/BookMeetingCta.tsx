@@ -1,20 +1,20 @@
 import { Zap, Phone } from './Icons';
+import { BOOKING_URL, CONTACT_PHONE } from '../lib/config';
 
 interface Props {
   university: string;
-  // Calendly / SavvyCal URL — replace with the real one once provisioned.
-  // Default goes to a placeholder so the CTA renders during build before
-  // the real link is wired.
-  bookingUrl?: string;
 }
 
-// Calendly link Saloni can swap once provisioned. Until then, the button
-// surfaces clearly that the destination is a placeholder so a real user
-// won't think the link is dead.
-const DEFAULT_BOOKING_URL = 'https://calendly.com/saloni-keel/discovery';
+// "Book a meeting" call-to-action below the Pitch. Both destinations
+// (Calendly URL + phone number) come from lib/config so a single edit
+// updates every tenant report. Until either is configured the CTA
+// renders a clearly-placeholder badge — that way a fresh deploy can't
+// silently route a real prospect to a dead Calendly or a wrong number.
+export default function BookMeetingCta({ university }: Props) {
+  const hasBooking = BOOKING_URL.trim().length > 0;
+  const hasPhone = CONTACT_PHONE.replace(/\D/g, '').length >= 10;
+  const telHref = hasPhone ? `tel:+${CONTACT_PHONE.replace(/\D/g, '')}` : null;
 
-export default function BookMeetingCta({ university, bookingUrl }: Props) {
-  const url = bookingUrl ?? DEFAULT_BOOKING_URL;
   return (
     <section className="rounded-2xl bg-gradient-to-br from-accent/12 via-surface to-sub/8 border-2 border-accent/30 shadow-card overflow-hidden relative">
       <div className="relative p-7 flex flex-col md:flex-row items-start md:items-center gap-6 justify-between">
@@ -36,22 +36,33 @@ export default function BookMeetingCta({ university, bookingUrl }: Props) {
             You can hear the difference before the meeting ends.
           </p>
         </div>
-        <div className="flex flex-col gap-2 shrink-0">
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-accent text-white font-semibold text-[14px] tracking-tight shadow-card hover:bg-accent2 transition"
-          >
-            Book a meeting
-          </a>
-          <a
-            href="tel:+15625551212"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-line bg-surface text-ink2 font-medium text-[12px] tracking-tight hover:border-line2 transition"
-          >
-            <Phone size={12} />
-            or call us
-          </a>
+        <div className="flex flex-col gap-2 shrink-0 items-stretch min-w-[180px]">
+          {hasBooking ? (
+            <a
+              href={BOOKING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-accent text-white font-semibold text-[14px] tracking-tight shadow-card hover:bg-accent2 transition"
+            >
+              Book a meeting
+            </a>
+          ) : (
+            <div
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-surface2 border border-dashed border-line2 text-muted2 font-medium text-[13px] tracking-tight"
+              title="Set BOOKING_URL in src/lib/config.ts"
+            >
+              Booking link coming soon
+            </div>
+          )}
+          {telHref && (
+            <a
+              href={telHref}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-line bg-surface text-ink2 font-medium text-[12px] tracking-tight hover:border-line2 transition"
+            >
+              <Phone size={12} />
+              or call us
+            </a>
+          )}
         </div>
       </div>
     </section>

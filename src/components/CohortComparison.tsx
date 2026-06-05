@@ -1,5 +1,6 @@
 import type { FrictionResult } from '../lib/types';
 import { brandClasses } from '../lib/scoreColor';
+import { cxi } from '../lib/cxi';
 
 export interface CohortRow {
   id: string;
@@ -19,11 +20,6 @@ interface Props {
 function shortLabel(name: string): string {
   return name.split(',')[0];
 }
-
-// CXI = 100 − friction. The ranking page reads in CXI everywhere so it
-// matches the KPI tile direction (high=good).
-const cxi = (frictionScore: number) =>
-  Math.max(0, Math.min(100, 100 - frictionScore));
 
 // CXI-band pill classes — brandClasses already maps high=good.
 function cxiBadgeClasses(cxiScore: number) {
