@@ -72,6 +72,10 @@ interface Props {
   // question list (student questions vs. K-12 departments) and gates the
   // K-12-specific UI variant.
   workspaceId: string;
+  // Count of tenants in the current workspace — surfaced in the K-12
+  // Always-Available tile's formula tooltip as evidence ("derived from
+  // N K-12 lines we've audited").
+  workspaceTenantCount: number;
 }
 
 export default function MetricCards({
@@ -86,9 +90,11 @@ export default function MetricCards({
   brandFormula,
   todayQuestionsCovered,
   workspaceId,
+  workspaceTenantCount,
 }: Props) {
   const questionList = questionListForWorkspace(workspaceId);
   const isK12 = workspaceId === 'k12-districts';
+  const k12AuditCount = workspaceTenantCount;
   const Q = questionList.length;
   const ivrCovered = Math.round(recommended.selfServiceCoverage * Q);
   const voiceCovered = Math.round(voiceAgent.selfServiceCoverage * Q);
@@ -227,7 +233,10 @@ export default function MetricCards({
               `or goes unanswered — families with after-hours questions get nothing.\n\n` +
               `Voice Agent: 24 / 7. Same answers the front office gives during\n` +
               `the day, available the moment a parent calls. The phone line\n` +
-              `finally matches what the website says at 8 PM on a Sunday.`
+              `finally matches what the website says at 8 PM on a Sunday.\n\n` +
+              `Departments the AI handles (derived from ${k12AuditCount} K-12 lines\n` +
+              `we've audited):\n` +
+              questionList.map((q, i) => `  ${i + 1}. ${q}`).join('\n')
             }
           />
         ) : (

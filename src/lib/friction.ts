@@ -43,8 +43,36 @@ export const TYPICAL_STUDENT_QUESTIONS = [
 
 // K-12 lines route by office/department rather than by student intent.
 // We score "department reach" — how many of these the IVR can route a
-// caller to without help — rather than question coverage. The list comes
-// from Saloni's K-12 walkthrough; it's a measurement, not a script.
+// caller to without help — rather than question coverage.
+//
+// METHODOLOGY: The first 14 items are the canonical departments Saloni
+// confirmed from her K-12 walkthrough. The last 3 are evidence-based
+// additions: scanning the 9 K-12 lines we've audited (Torrance USD
+// district + 7 campuses + Pacifica Christian) surfaced Administration
+// (Principal / Assistant Principal, 3 of 9 tenants), Enrollment &
+// Student Services (1 of 9 — TUSD district), and Special Education
+// (2 of 9). All 14 of Saloni's original items are also present in the
+// audited menus, which validates the canonical list.
+//
+// Coverage frequencies across the 9 K-12 audits (for reference):
+//   Attendance / Absence              7/9
+//   School / District Directory       7/9
+//   Operator / Live transfer          6/9
+//   Dial-by-name Directory            5/9
+//   Health Office                     5/9
+//   Counseling                        4/9
+//   Address & Directions              4/9
+//   Business & Finance                3/9
+//   Main Office / Front Desk          3/9
+//   Administration / Principal        3/9   ← added
+//   Activities                        3/9
+//   Athletics                         3/9
+//   Special Education                 2/9   ← added
+//   Dean of Students                  2/9
+//   Enrollment & Student Services     1/9   ← added (district-level)
+//   Admissions                        1/9   (Pacifica)
+//   Registrar                         1/9   (Pacifica)
+//   Executive Office                  1/9   (TUSD)
 export const TYPICAL_K12_DEPARTMENTS = [
   'Attendance / Absence',
   'Front Desk',
@@ -60,6 +88,9 @@ export const TYPICAL_K12_DEPARTMENTS = [
   'Activities',
   'Athletics Department',
   'Dean of Students',
+  'Administration (Principal / AP)',
+  'Enrollment & Student Services',
+  'Special Education',
 ] as const;
 
 // Workspace-keyed lookup so every consumer (KPI tile denominator, audit

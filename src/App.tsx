@@ -627,6 +627,7 @@ export default function App() {
             brandFormula={brandFormula}
             todayQuestionsCovered={todayQuestionsCovered}
             workspaceId={active.workspace ?? 'universities'}
+            workspaceTenantCount={universities.length}
           />
         </div>
 
