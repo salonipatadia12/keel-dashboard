@@ -24,5 +24,5 @@ export const SHOW_OPTIMIZED_IVR = false;
 // in a new tab.
 // CONTACT_PHONE: caller-facing number used by the "or call us" link.
 // Format any way (the tel: link strips non-digits at render time).
-export const BOOKING_URL = '';
+export const BOOKING_URL = 'https://scheduler.zoom.us/steve-reasner/ai4';
 export const CONTACT_PHONE = '';
