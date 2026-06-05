@@ -211,18 +211,21 @@ export default function MetricCards({
             icon={<HelpCircle size={14} />}
             label="Always Available"
             today={{
-              value: 'Office hours',
-              caption: 'humans needed',
+              // Short value mirrors the "24 / 7" framing on the voice cell
+              // so the two numbers visually contrast at a glance. Full
+              // "office hours" story moves into the caption.
+              value: 'M–F 8–5',
+              caption: 'office hours',
               band: 'red',
             }}
             ivr={{
-              value: 'Office hours',
-              caption: 'menu + humans',
+              value: 'M–F 8–5',
+              caption: 'office hours',
               band: 'red',
             }}
             voice={{
               value: '24 / 7',
-              caption: 'AI answers any time',
+              caption: 'any time of day',
               band: 'green',
             }}
             delta={{ value: 'always on', tone: 'good' }}

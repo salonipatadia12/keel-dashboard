@@ -195,11 +195,11 @@ export default function UniversitySelector({
         }
       >
         <span className="text-[10px] uppercase tracking-[0.18em] text-muted font-semibold">
-          University
+          {hasMultiCampusGroup ? 'Campus' : 'University'}
         </span>
         <span className="h-3.5 w-px bg-line" />
         <span className="text-[13px] font-semibold tracking-tight text-ink">
-          {shortLabel(active.name)}
+          {shortLabel(active.name).replace(/^.*?\s+[—-]\s+/, '')}
         </span>
         {activeScore.hasNoIvr ? (
           <span

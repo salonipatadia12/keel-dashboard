@@ -45,23 +45,34 @@ function Cell({
     voice: 'Voice agent',
   };
   const c = bandClasses(band);
+  // Long text values (e.g. "Office hours", "always on") shouldn't blow
+  // out the grid track. min-w-0 lets the cell shrink to its allocated
+  // grid column, and truncate clips anything that still doesn't fit.
+  // Numeric values like "28" or "3:58" are short enough to fit either
+  // way, so this is invisible for the common case.
+  const valueIsLong = typeof value === 'string' && value.length > 6;
   return (
     <div
-      className={`rounded-lg border px-2 py-2 ${c.cellBg} ${c.cellBorder} flex flex-col h-full`}
+      className={`rounded-lg border px-2 py-2 min-w-0 overflow-hidden ${c.cellBg} ${c.cellBorder} flex flex-col h-full`}
     >
       <div
-        className={`text-[8px] uppercase tracking-wider font-semibold mb-1 ${c.cellTextSolid} opacity-85 whitespace-nowrap`}
+        className={`text-[8px] uppercase tracking-wider font-semibold mb-1 ${c.cellTextSolid} opacity-85 truncate`}
       >
         {labels[tier]}
       </div>
       <div
-        className={`text-lg font-bold tabular-nums leading-none whitespace-nowrap ${c.cellTextSolid}`}
+        className={
+          `font-bold tabular-nums leading-none truncate ${c.cellTextSolid} ` +
+          (valueIsLong ? 'text-sm' : 'text-lg')
+        }
+        title={typeof value === 'string' ? value : undefined}
       >
         {value}
       </div>
       {caption && (
         <div
-          className={`text-[8px] mt-1.5 leading-tight whitespace-nowrap ${c.cellTextSolid} opacity-80`}
+          className={`text-[8px] mt-1.5 leading-tight truncate ${c.cellTextSolid} opacity-80`}
+          title={caption}
         >
           {caption}
         </div>
