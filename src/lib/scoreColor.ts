@@ -58,15 +58,22 @@ const CLASSES: Record<Band, BandClasses> = {
     hex: '#db2777',
   },
   yellow: {
-    pillBg: 'bg-band_yellow/15',
-    pillText: 'text-band_yellow',
-    pillBorder: 'border-band_yellow/35',
-    cellBg: 'bg-band_yellow_dark',
-    cellBorder: 'border-band_yellow/30',
-    cellText: 'text-band_yellow',
-    cellTextSolid: 'text-white',
+    // Yellow is the one band where the "dark variant + white text" recipe
+    // doesn't work. The client-specified #FFEF00 reads as the right
+    // color, but white text on it fails AA contrast (~1.4:1). So the
+    // yellow band cells fill with the bright #FFEF00 and switch to dark
+    // text (text-ink, ~17:1 contrast on yellow). Pill text + cellText
+    // (used on white surfaces like BrandImpact) drop to the dark mustard
+    // variant so they read against light backgrounds.
+    pillBg: 'bg-band_yellow/20',
+    pillText: 'text-band_yellow_dark',
+    pillBorder: 'border-band_yellow_dark/40',
+    cellBg: 'bg-band_yellow',
+    cellBorder: 'border-band_yellow_dark/30',
+    cellText: 'text-band_yellow_dark',
+    cellTextSolid: 'text-ink',
     barFill: 'bg-band_yellow',
-    hex: '#b45309',
+    hex: '#FFEF00',
   },
   blue: {
     pillBg: 'bg-band_blue/15',

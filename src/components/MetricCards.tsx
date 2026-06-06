@@ -2,7 +2,7 @@ import KpiTile from './KpiTile';
 import type { FrictionResult, Reference } from '../lib/types';
 import type { BrandIndex } from '../lib/brand';
 import { questionListForWorkspace } from '../lib/friction';
-import { frictionBand, brandBand, type Band } from '../lib/scoreColor';
+import { brandBand, type Band } from '../lib/scoreColor';
 import { SHOW_OPTIMIZED_IVR } from '../lib/config';
 import {
   Activity,
@@ -22,12 +22,17 @@ function fmtDuration(sec: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// Map a wait time in seconds to the 0-100 friction-equivalent scale that
-// drives the color band. Same shape the friction model uses internally:
-// 30s baseline ≈ 0, 180s ≈ 100.
+// Wait-time bands (client-specified thresholds, June 2026):
+//   ≤ 1:30 (90s)   green   — voice-agent territory, target zone
+//   1:30 – 3:00     yellow  — single-menu IVR typical range
+//   > 3:00 (180s)  red     — multi-menu / hold-heavy lines
+// Three-band system here is intentionally coarser than the 5-band CXI
+// scale — the conversation is "how long do real callers wait" and three
+// buckets map cleanly to the pitch.
 function waitBand(sec: number): Band {
-  const score = Math.max(0, Math.min(100, (sec - 30) / 1.5));
-  return frictionBand(score);
+  if (!Number.isFinite(sec) || sec <= 90) return 'green';
+  if (sec <= 180) return 'yellow';
+  return 'red';
 }
 
 // Generic "count of bad things" mapping. 0 is best, each unit pushes up

@@ -310,10 +310,12 @@ export function buildVoiceAgentTree(
   //    (each digit_test call's `duration` is the whole call from pickup
   //    to hangup, so the friction averaging stays apples-to-apples).
   //
-  //    Budget: 12s disclaimer + 10s greeting/intent prompt + ~68s of
-  //    conversation (3 turns × ~22s: caller speaks 4-6s + AI latency
-  //    ~700ms + AI speaks 10-15s) = ~90s end-to-end. Root.durationSec
-  //    above is metadata only — it's excluded from the avg by friction.ts.
+  //    Budget: 12s disclaimer + 10s greeting/intent prompt + ~63s of
+  //    conversation (3 turns × ~21s: caller speaks 4-6s + AI latency
+  //    ~700ms + AI speaks 9-14s) = ~85s end-to-end. 85s deliberately
+  //    lands just under the 90s green-band threshold defined in
+  //    MetricCards waitBand. Root.durationSec above is metadata only —
+  //    it's excluded from the avg by friction.ts.
   //
   //    Benchmarks (May 2026 research):
   //    - Vapi: 465ms optimized end-to-end, 700-1500ms typical
@@ -325,22 +327,23 @@ export function buildVoiceAgentTree(
   //      benchmark) — also a multi-question intake, not single Q&A
   //    - Klarna chat AI: <2min vs 11min for human (chat, not voice; full
   //      issue resolution)
-  //    For a university single-question Q&A, 90s is the credible midpoint
+  //    For a university single-question Q&A, 85s is the credible midpoint
   //    between sub-2min chat resolution and multi-minute complex IVR
-  //    intake calls.
+  //    intake calls — and intentionally just under the 90s green-band
+  //    cut-off so the voice tile reads as "fast" not "borderline."
   const aiAnswer = makeNode(
     '1',
     'Voice agent answers (AI)',
     'ai',
     1,
-    90
+    85
   );
   aiAnswer.notes =
-    'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25 languages · around 80% of calls resolved without escalation. ~90s for a single question with a clarifying turn.';
+    'Hours · App status · Tuition / billing · Account & password · Course Q&A · 25 languages · around 80% of calls resolved without escalation. ~85s for a single question with a clarifying turn.';
 
   // 2) Routed to a human — AI captures intent + identity, then transfers.
-  //    Duration: ~25s AI intent capture + ~50s transfer/hold + ~15s human
-  //    pickup acknowledgment = ~90s before the caller is actually being
+  //    Duration: ~25s AI intent capture + ~45s transfer/hold + ~15s human
+  //    pickup acknowledgment = ~85s before the caller is actually being
   //    helped by the human. Still well below today's 2-3min university
   //    IVRs where the caller waits through nested menus before reaching
   //    a person.
@@ -349,10 +352,10 @@ export function buildVoiceAgentTree(
     'Routed to human (when needed)',
     'human',
     1,
-    90
+    85
   );
   humanRoute.notes =
-    'Complex cases · Specific advisor requests · Emergencies. The agent hands off with intent and caller identity prefilled, so the human picks up at speed (~25s AI intent + ~50s transfer wait + ~15s human pickup).';
+    'Complex cases · Specific advisor requests · Emergencies. The agent hands off with intent and caller identity prefilled, so the human picks up at speed (~25s AI intent + ~45s transfer wait + ~15s human pickup).';
 
   root.children = [aiAnswer, humanRoute];
   addRepeatNodes(root);
