@@ -28,7 +28,7 @@ export default function Pitch({
   return (
     <section className="rounded-2xl bg-surface border border-line shadow-card overflow-hidden relative">
       <div className="absolute top-0 left-1/4 w-72 h-72 bg-accent/8 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-sub/6 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-band_green/6 rounded-full blur-3xl pointer-events-none" />
       <div className="relative p-7">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-7 h-7 rounded-md bg-accent/10 border border-accent/25 flex items-center justify-center text-accent">

@@ -51,13 +51,13 @@ const STYLE: Record<
     accent: 'bg-warn',
   },
   submenu: {
-    border: 'border-sub/40',
-    chipBg: 'bg-sub/10',
-    chipText: 'text-sub',
-    iconColor: 'text-sub',
+    border: 'border-muted/40',
+    chipBg: 'bg-muted/10',
+    chipText: 'text-muted',
+    iconColor: 'text-muted',
     tag: 'Menu',
     icon: Menu,
-    accent: 'bg-sub',
+    accent: 'bg-muted',
   },
   submenu_unexplored: {
     border: 'border-muted2/40',
@@ -164,7 +164,7 @@ export default function IvrNode({ data }: { data: IvrNodeData }) {
             )}
             {hasPhone && (
               <span
-                className="flex items-center gap-1 text-sub font-medium"
+                className="flex items-center gap-1 text-muted font-medium"
                 title={n.phones.map((p) => p.value).join(', ')}
               >
                 <Phone size={10} /> {n.phones.length}

@@ -36,9 +36,8 @@ function scoreOf(
   };
 }
 
-// Color the CXI badge using the high=good band palette: green ≥80,
-// blue 60-79, yellow 40-59, pink 20-39, red <20. Matches the KPI tile
-// and Rankings page direction.
+// Color the CXI badge using the high=good 3-band palette: green ≥67,
+// yellow 33-66, red <33. Matches the KPI tile and Rankings page.
 function badgeClasses(cxiScore: number | null): string {
   if (cxiScore === null) return 'bg-surface text-muted border-line';
   const c = brandClasses(cxiScore);
@@ -236,9 +235,9 @@ export default function UniversitySelector({
                 'text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums ' +
                 badgeClasses(activeScore.cxiScore)
               }
-              title="CXI score"
+              title="CXI (Customer Experience Index, higher is better)"
             >
-              {activeScore.cxiScore}
+              CXI {activeScore.cxiScore}
             </span>
           )
         )}
@@ -340,9 +339,9 @@ export default function UniversitySelector({
                                   'text-[10px] font-bold px-1.5 py-0.5 rounded border tabular-nums ' +
                                   badgeClasses(cxiScore)
                                 }
-                                title="CXI score"
+                                title="CXI (Customer Experience Index, higher is better)"
                               >
-                                {cxiScore}
+                                CXI {cxiScore}
                               </span>
                             )
                           )}

@@ -1,17 +1,20 @@
-// Shared 5-band color helper used by every score-rendering surface
+// Shared 3-band color helper used by every score-rendering surface
 // (KPI tiles, brand impact, university selector, cohort comparison bars).
 //
-// Saloni's bands, applied to friction scores where higher = worse:
-//   >= 80  red    severe friction
-//   60-79  pink   heavy friction
-//   40-59  yellow moderate friction
-//   20-39  blue   light friction
-//   <  20  green  minimal friction
+// Client-specified palette (June 2026): red / yellow / green only. No
+// blue, no pink — every score lands in one of three bands.
 //
-// For brand reputation, the score is inverted (high = better), so the
-// palette flips: 80+ green, 60-79 blue, etc.
+// For friction (high = bad):
+//   >= 67  red    severe friction
+//   33-66  yellow moderate friction
+//   <  33  green  minimal friction
+//
+// For brand reputation / CXI (high = good), the palette flips:
+//   >= 67  green
+//   33-66  yellow
+//   <  33  red
 
-export type Band = 'red' | 'pink' | 'yellow' | 'blue' | 'green';
+export type Band = 'red' | 'yellow' | 'green';
 
 export interface BandClasses {
   // Solid fill for a small badge / pill background, with readable text.
@@ -36,37 +39,26 @@ export interface BandClasses {
 
 const CLASSES: Record<Band, BandClasses> = {
   red: {
-    pillBg: 'bg-band_red/15',
-    pillText: 'text-band_red',
-    pillBorder: 'border-band_red/35',
+    pillBg: 'bg-band_red',
+    pillText: 'text-white',
+    pillBorder: 'border-band_red',
     cellBg: 'bg-band_red_dark',
     cellBorder: 'border-band_red/30',
     cellText: 'text-band_red',
     cellTextSolid: 'text-white',
     barFill: 'bg-band_red',
-    hex: '#dc2626',
-  },
-  pink: {
-    pillBg: 'bg-band_pink/15',
-    pillText: 'text-band_pink',
-    pillBorder: 'border-band_pink/35',
-    cellBg: 'bg-band_pink_dark',
-    cellBorder: 'border-band_pink/30',
-    cellText: 'text-band_pink',
-    cellTextSolid: 'text-white',
-    barFill: 'bg-band_pink',
-    hex: '#db2777',
+    hex: '#900D09',
   },
   yellow: {
     // Yellow is the one band where the "dark variant + white text" recipe
     // doesn't work. The client-specified #FFEF00 reads as the right
-    // color, but white text on it fails AA contrast (~1.4:1). So the
-    // yellow band cells fill with the bright #FFEF00 and switch to dark
-    // text (text-ink, ~17:1 contrast on yellow). Pill text + cellText
-    // (used on white surfaces like BrandImpact) drop to the dark mustard
-    // variant so they read against light backgrounds.
-    pillBg: 'bg-band_yellow/20',
-    pillText: 'text-band_yellow_dark',
+    // color, but white text on it fails AA contrast. So pill and cell
+    // both fill with bright #FFEF00 and use dark text (text-ink,
+    // ~17:1 contrast on yellow). cellText (used on WHITE backgrounds
+    // like BrandImpact cards) drops to the dark mustard variant so it
+    // reads against light surfaces.
+    pillBg: 'bg-band_yellow',
+    pillText: 'text-ink',
     pillBorder: 'border-band_yellow_dark/40',
     cellBg: 'bg-band_yellow',
     cellBorder: 'border-band_yellow_dark/30',
@@ -75,48 +67,32 @@ const CLASSES: Record<Band, BandClasses> = {
     barFill: 'bg-band_yellow',
     hex: '#FFEF00',
   },
-  blue: {
-    pillBg: 'bg-band_blue/15',
-    pillText: 'text-band_blue',
-    pillBorder: 'border-band_blue/35',
-    cellBg: 'bg-band_blue_dark',
-    cellBorder: 'border-band_blue/30',
-    cellText: 'text-band_blue',
-    cellTextSolid: 'text-white',
-    barFill: 'bg-band_blue',
-    hex: '#2563eb',
-  },
   green: {
-    pillBg: 'bg-band_green/15',
-    pillText: 'text-band_green',
-    pillBorder: 'border-band_green/35',
+    pillBg: 'bg-band_green',
+    pillText: 'text-white',
+    pillBorder: 'border-band_green',
     cellBg: 'bg-band_green_dark',
     cellBorder: 'border-band_green/30',
     cellText: 'text-band_green',
     cellTextSolid: 'text-white',
     barFill: 'bg-band_green',
-    hex: '#059669',
+    hex: '#228B22',
   },
 };
 
 // High-is-bad — used for friction scores.
 export function frictionBand(score: number): Band {
   if (!Number.isFinite(score)) return 'yellow';
-  if (score >= 80) return 'red';
-  if (score >= 60) return 'pink';
-  if (score >= 40) return 'yellow';
-  if (score >= 20) return 'blue';
+  if (score >= 67) return 'red';
+  if (score >= 33) return 'yellow';
   return 'green';
 }
 
-// High-is-good — used for brand reputation and any other score where the
-// caller wants the number to climb (question coverage, brand index, etc.).
+// High-is-good — used for brand reputation, CXI, question coverage, etc.
 export function brandBand(score: number): Band {
   if (!Number.isFinite(score)) return 'yellow';
-  if (score >= 80) return 'green';
-  if (score >= 60) return 'blue';
-  if (score >= 40) return 'yellow';
-  if (score >= 20) return 'pink';
+  if (score >= 67) return 'green';
+  if (score >= 33) return 'yellow';
   return 'red';
 }
 

@@ -140,9 +140,11 @@ export default function ParentOverview({
           label="Avg menu depth"
           value={avgDepth.toFixed(1)}
           bandClass={
-            avgDepth >= 2
-              ? 'bg-band_yellow_dark border-band_yellow/30'
-              : 'bg-band_blue_dark border-band_blue/30'
+            avgDepth >= 3
+              ? 'bg-band_red_dark border-band_red/30'
+              : avgDepth >= 1
+                ? 'bg-band_yellow border-band_yellow_dark/30'
+                : 'bg-band_green_dark border-band_green/30'
           }
           textValue
         />
@@ -250,14 +252,21 @@ function RollupStat({
   suffix?: string;
   textValue?: boolean;
 }) {
+  // Yellow cells use #FFEF00 fill, which white text can't sit on (AA fails).
+  // The brand_X_dark variants (red, green) pair with white. Detect the
+  // yellow case by the literal class string so the rollup tiles read on
+  // every band.
+  const isYellow = bandClass.includes('bg-band_yellow') && !bandClass.includes('bg-band_yellow_dark');
+  const labelClass = isYellow ? 'text-ink/85' : 'text-white/85';
+  const valueClass = isYellow ? 'text-ink' : 'text-white';
   return (
     <div
       className={`rounded-lg border px-3 py-3 flex flex-col gap-1.5 ${bandClass}`}
     >
-      <div className="text-[10px] uppercase tracking-wider font-semibold text-white/85">
+      <div className={`text-[10px] uppercase tracking-wider font-semibold ${labelClass}`}>
         {label}
       </div>
-      <div className={`text-2xl font-bold tabular-nums text-white leading-none ${textValue ? '' : ''}`}>
+      <div className={`text-2xl font-bold tabular-nums leading-none ${valueClass} ${textValue ? '' : ''}`}>
         {value}
         {suffix && (
           <span className="text-[12px] font-normal opacity-80 ml-1">

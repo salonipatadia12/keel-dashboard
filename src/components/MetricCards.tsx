@@ -36,12 +36,10 @@ function waitBand(sec: number): Band {
 }
 
 // Generic "count of bad things" mapping. 0 is best, each unit pushes up
-// the score by ~20-25 points so the bands trip predictably.
+// the score. 3 bands per client spec — no blue, no pink.
 function countBand(n: number): Band {
   if (!Number.isFinite(n) || n <= 0) return 'green';
-  if (n === 1) return 'blue';
-  if (n === 2) return 'yellow';
-  if (n <= 4) return 'pink';
+  if (n <= 2) return 'yellow';
   return 'red';
 }
 
@@ -49,9 +47,7 @@ function countBand(n: number): Band {
 // which is the K-12 / no-IVR pattern.
 function depthBand(d: number): Band {
   if (!Number.isFinite(d) || d <= 0) return 'green';
-  if (d === 1) return 'blue';
-  if (d === 2) return 'yellow';
-  if (d === 3) return 'pink';
+  if (d <= 2) return 'yellow';
   return 'red';
 }
 
