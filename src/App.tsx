@@ -42,6 +42,7 @@ const NO_IVR_IDS = new Set<string>([
   'iu-bloomington',
   'illinois-state',
   'stanford',
+  'upenn',
 ]);
 
 function treeHeight(maxDepth: number): number {

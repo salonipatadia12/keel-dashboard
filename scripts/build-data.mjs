@@ -58,6 +58,7 @@ const SOURCES = [
   { id: 'northwestern', file: 'IVR_Northwestern.xlsx', workspace: 'universities' },
   { id: 'uchicago', file: 'IVR_UChicago.xlsx', workspace: 'universities' },
   { id: 'alabama-state', file: 'IVR_Alabama State University.xlsx', workspace: 'universities' },
+  { id: 'upenn', file: 'IVR_UPenn.xlsx', workspace: 'universities', displayName: 'University of Pennsylvania' },
   // Torrance Unified School District — the parent org. District office + 7
   // campuses, each scraped as its own tenant. Sharing parentOrg='tusd'
   // lets the K12 workspace render them as one parent card that drills

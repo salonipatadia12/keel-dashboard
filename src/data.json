@@ -1,6 +1,6 @@
 {
-  "source": "IVR_CSU_Sacramento.xlsx, IVR_San_Jose.xlsx, IVR_Santa_Clara.xlsx, IVR_UC_Berkeley.xlsx, IVR_UC_Davis.xlsx, IVR_UC_Irvine.xlsx, IVR_UC_San_Diego.xlsx, IVR_UCLA.xlsx, IVR_SDSU.xlsx, IVR_Cal_State_Long_Beach.xlsx, IVR_Indiana_Indianapolis.xlsx, IVR_USC.xlsx, IVR_Stanford.xlsx, IVR_Indiana_Bloomington.xlsx, IVR_Cal_State_Northridge.xlsx, IVR_CSU_Los_Angeles.xlsx, IVR_Cal_State_Fullerton.xlsx, IVR_UIUC.xlsx, IVR_Illinois_State.xlsx, IVR_Ball_State.xlsx, IVR_Notre_Dame.xlsx, IVR_Northern_Illinois.xlsx, IVR_DePaul.xlsx, IVR_Loyola_Chicago.xlsx, IVR_UIC.xlsx, IVR_Northwestern.xlsx, IVR_UChicago.xlsx, IVR_Alabama State University.xlsx, IVR_Torrance_USD.xlsx, IVR_Adams Elementary.xlsx, IVR_Calle Mayor Middle.xlsx, IVR_Casimir Middle.xlsx, IVR_Jefferson Middle.xlsx, IVR_North High.xlsx, IVR_Torrance High.xlsx, IVR_West High.xlsx, IVR_Pacifica Christian.xlsx",
-  "generatedAt": "2026-06-06T01:46:32.224Z",
+  "source": "IVR_CSU_Sacramento.xlsx, IVR_San_Jose.xlsx, IVR_Santa_Clara.xlsx, IVR_UC_Berkeley.xlsx, IVR_UC_Davis.xlsx, IVR_UC_Irvine.xlsx, IVR_UC_San_Diego.xlsx, IVR_UCLA.xlsx, IVR_SDSU.xlsx, IVR_Cal_State_Long_Beach.xlsx, IVR_Indiana_Indianapolis.xlsx, IVR_USC.xlsx, IVR_Stanford.xlsx, IVR_Indiana_Bloomington.xlsx, IVR_Cal_State_Northridge.xlsx, IVR_CSU_Los_Angeles.xlsx, IVR_Cal_State_Fullerton.xlsx, IVR_UIUC.xlsx, IVR_Illinois_State.xlsx, IVR_Ball_State.xlsx, IVR_Notre_Dame.xlsx, IVR_Northern_Illinois.xlsx, IVR_DePaul.xlsx, IVR_Loyola_Chicago.xlsx, IVR_UIC.xlsx, IVR_Northwestern.xlsx, IVR_UChicago.xlsx, IVR_Alabama State University.xlsx, IVR_UPenn.xlsx, IVR_Torrance_USD.xlsx, IVR_Adams Elementary.xlsx, IVR_Calle Mayor Middle.xlsx, IVR_Casimir Middle.xlsx, IVR_Jefferson Middle.xlsx, IVR_North High.xlsx, IVR_Torrance High.xlsx, IVR_West High.xlsx, IVR_Pacifica Christian.xlsx",
+  "generatedAt": "2026-06-08T17:12:08.781Z",
   "workspaces": [
     {
       "id": "universities",
@@ -30389,6 +30389,83 @@
           "callId": "019e8a04-e80b-722b-a3b6-c8478985d499",
           "status": "analyzed",
           "created_at": null
+        }
+      ]
+    },
+    {
+      "id": "upenn",
+      "source": "IVR_UPenn.xlsx",
+      "workspace": "universities",
+      "parentOrg": null,
+      "childKind": null,
+      "name": "University of Pennsylvania",
+      "phone": "12158985000",
+      "universityList": [
+        {
+          "university": "University of Pennsylvania",
+          "phone": 12158985000
+        }
+      ],
+      "overview": [
+        {
+          "callId": "019ea80f-7569-7ddd-b947-48ed335293b5",
+          "parent_call_id": null,
+          "university": "University of Pennsylvania",
+          "mode": "menu_discovery",
+          "business_hours": null,
+          "live_operator_available": true,
+          "voicemail_available": false,
+          "ivr_depth": 0,
+          "closed_hours_loop": null,
+          "notes": "Call ended after greeting, no IVR navigation.",
+          "path": "main menu",
+          "depth": 0,
+          "digit_tested": null,
+          "outcome_detail": "Call was answered by a live person (Marcia) with no menu options presented.",
+          "outcome_type": "human",
+          "has_submenu": false,
+          "duration": 58
+        }
+      ],
+      "menuMapping": [],
+      "scriptCapture": [],
+      "systemCharacteristics": [
+        {
+          "callId": "019ea80f-7569-7ddd-b947-48ed335293b5",
+          "parent_call_id": null,
+          "university": "University of Pennsylvania",
+          "asks_questions": false,
+          "collects_id": false,
+          "collects_dtmf": false,
+          "has_operator_zero": false,
+          "loop_behavior": "none",
+          "escalation_path": "none",
+          "system_type": "live operator",
+          "path": null
+        }
+      ],
+      "tone": [
+        {
+          "callId": "019ea80f-7569-7ddd-b947-48ed335293b5",
+          "parent_call_id": "parent_call_id: d.parent_call_id || '',",
+          "university": "University of Pennsylvania",
+          "tone": "neutral",
+          "conversational": true,
+          "script_density": "very low",
+          "empathy_level": "low",
+          "automation_level": "very low",
+          "path": null
+        }
+      ],
+      "frictionScore": [],
+      "discoveryQueue": [
+        {
+          "run_id": 1780936045818,
+          "university": "University of Pennsylvania",
+          "target_number": 12158985000,
+          "callId": "019ea80f-7569-7ddd-b947-48ed335293b5",
+          "status": "analyzed",
+          "created_at": "2026-06-08T16:27:25.929Z"
         }
       ]
     },
