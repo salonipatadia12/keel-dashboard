@@ -314,11 +314,20 @@ export default function MetricCards({
           hideIvr={hideIvr}
           icon={<Sparkles size={14} />}
           label="Brand Reputation"
-          today={{
-            value: brandCurrent.score,
-            caption: brandCurrent.label,
-            band: brandBand(brandCurrent.score),
-          }}
+          today={
+            hasNoIvr
+              ? // brandReputationIndex pulls 50% from friction.totalScore and
+                // 20% from clarity — both synthetic for no-IVR tenants (no
+                // real IVR to score). Showing a "36 / At Risk" number here
+                // would be invented, so swap to N/A matching the other
+                // Today tiles for these lines.
+                { value: 'N/A', caption: 'no IVR', band: 'red' }
+              : {
+                  value: brandCurrent.score,
+                  caption: brandCurrent.label,
+                  band: brandBand(brandCurrent.score),
+                }
+          }
           ivr={{
             value: brandRecommended.score,
             caption: brandRecommended.label,
@@ -329,7 +338,7 @@ export default function MetricCards({
             caption: brandVoice.label,
             band: brandBand(brandVoice.score),
           }}
-          delta={{ value: `up ${brandDelta} pts`, tone: 'good' }}
+          delta={hasNoIvr ? undefined : { value: `up ${brandDelta} pts`, tone: 'good' }}
           emphasis
           formula={brandFormula}
         />

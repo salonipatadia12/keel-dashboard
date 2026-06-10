@@ -56,13 +56,35 @@ export function computeCost(
 ): CostBreakdown {
   const ws = DEFAULTS[workspaceId] ?? DEFAULTS.universities;
   const override = TENANT_COST_INPUTS[tenantId] ?? {};
-  const people = override.people ?? ws.people;
-  const dailyCallVolume = Math.max(1, override.dailyCallVolume ?? ws.dailyCallVolume);
+
+  // NaN safety: Math.max(1, NaN) returns NaN, not 1. So a typo or undefined
+  // value in an override silently propagates NaN through every downstream
+  // multiplication. Validate each input with Number.isFinite before clamping.
+  const peopleOverride = override.people;
+  const people =
+    Number.isFinite(peopleOverride) && (peopleOverride as number) >= 0
+      ? (peopleOverride as number)
+      : ws.people;
+
+  const volumeOverride = override.dailyCallVolume;
+  const dailyCallVolume = Math.max(
+    1,
+    Number.isFinite(volumeOverride) && (volumeOverride as number) >= 1
+      ? (volumeOverride as number)
+      : ws.dailyCallVolume
+  );
+
+  // Same hazard on voiceAvgDurationSec — falls back to 85s (the per-leaf
+  // default in lib/recommend.ts) so the cost tiles never render "$NaN".
+  const voiceDurationSec =
+    Number.isFinite(voiceAvgDurationSec) && voiceAvgDurationSec >= 0
+      ? voiceAvgDurationSec
+      : 85;
 
   const todayDailyLaborCost = HOURLY_RATE * HOURS_PER_DAY * people;
   const todayCostPerCall = todayDailyLaborCost / dailyCallVolume;
 
-  const voiceMinutes = Math.max(0, voiceAvgDurationSec) / 60;
+  const voiceMinutes = voiceDurationSec / 60;
   const voiceCostPerCall = voiceMinutes * VOICE_AGENT_RATE_PER_MIN;
 
   const annualSavings = Math.max(

@@ -1,5 +1,4 @@
 import {
-  computeCost,
   costBand,
   savingsBand,
   fmtUsdPerCall,
@@ -7,20 +6,16 @@ import {
   HOURLY_RATE,
   HOURS_PER_DAY,
   VOICE_AGENT_RATE_PER_MIN,
+  type CostBreakdown,
 } from '../lib/cost';
 import { bandClasses } from '../lib/scoreColor';
 import { TrendingUp, Phone, Sparkles } from './Icons';
 
 interface Props {
-  tenantId: string;
-  workspaceId: string;
-  // Average voice-agent call duration in seconds — pulled from
-  // friction.avgDurationSec on the voice-agent tree. Falls back to 85s
-  // (the per-leaf default in lib/recommend.ts) if the friction model
-  // didn't compute one for this tenant.
-  voiceAvgDurationSec: number;
-  // No-IVR tenants get a slightly different framing in the captions
-  // (live person picks up vs IVR routes), but the math is identical.
+  // Pre-computed cost breakdown passed in from App.tsx so the same numbers
+  // power both this strip and the Pitch sentence below it (single source
+  // of truth, single computation per render).
+  breakdown: CostBreakdown;
   hasNoIvr: boolean;
 }
 
@@ -29,13 +24,7 @@ interface Props {
 //
 // For no-IVR tenants (where CXI is N/A above), this IS the pitch —
 // it's the apples-to-apples number that compares to an IVR tenant.
-export default function CostStrip({
-  tenantId,
-  workspaceId,
-  voiceAvgDurationSec,
-  hasNoIvr,
-}: Props) {
-  const breakdown = computeCost(tenantId, workspaceId, voiceAvgDurationSec);
+export default function CostStrip({ breakdown, hasNoIvr }: Props) {
   const { todayCostPerCall, voiceCostPerCall, annualSavings, inputs } = breakdown;
 
   const todayBand = bandClasses(costBand(todayCostPerCall));
@@ -43,11 +32,14 @@ export default function CostStrip({
   const savingsClasses = bandClasses(savingsBand(annualSavings));
 
   const voiceSeconds = Math.round(inputs.voiceCallMinutes * 60);
-  const todayCaption = hasNoIvr
-    ? `${inputs.people} ppl × $${HOURLY_RATE}/hr × ${HOURS_PER_DAY}hr ÷ ${inputs.dailyCallVolume} calls`
-    : `${inputs.people} ppl × $${HOURLY_RATE}/hr × ${HOURS_PER_DAY}hr ÷ ${inputs.dailyCallVolume} calls`;
+  const todayCaption = `${inputs.people} ppl × $${HOURLY_RATE}/hr × ${HOURS_PER_DAY}hr ÷ ${inputs.dailyCallVolume} calls`;
   const voiceCaption = `${voiceSeconds}s × $${VOICE_AGENT_RATE_PER_MIN.toFixed(2)}/min`;
   const savingsCaption = `at ${inputs.dailyCallVolume} calls/day · 365 days`;
+  // hasNoIvr is currently unused in the captions (math is identical for
+  // no-IVR and IVR tenants) but kept on the prop list so the strip can
+  // diverge framing later without an App.tsx change. Marked used to keep
+  // TS happy under strict noUnusedParameters.
+  void hasNoIvr;
 
   const formula =
     `Cost per call — front-desk labor vs voice agent.\n\n` +

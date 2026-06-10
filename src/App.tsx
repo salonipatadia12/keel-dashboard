@@ -469,6 +469,14 @@ export default function App() {
   const recommendedHeight = Math.max(560, treeHeight(recommended.friction.maxDepth));
   const voiceAgentHeight = Math.max(520, treeHeight(voiceAgent.friction.maxDepth));
   const brandFormula = brandCurrent.breakdown.formula;
+  // Cost breakdown — computed once per (tenant, voice-duration) change and
+  // shared between <CostStrip> and <Pitch> so the dollar figures match.
+  const voiceAvgSec = voiceAgent.friction.avgDurationSec ?? 85;
+  const activeTenantWorkspace = active.workspace ?? 'universities';
+  const costBreakdown = useMemo(
+    () => computeCost(active.id, activeTenantWorkspace, voiceAvgSec),
+    [active.id, activeTenantWorkspace, voiceAvgSec]
+  );
 
   return (
     <div className="min-h-screen">
@@ -671,13 +679,12 @@ export default function App() {
         {/* Cost / ROI — apples-to-apples dollar comparison. Sits below
             MetricCards so it reads as the next-tier KPI after the UX
             ones. For no-IVR tenants this is the headline metric since
-            the CXI tiles above show N/A. */}
-        <CostStrip
-          tenantId={active.id}
-          workspaceId={active.workspace ?? 'universities'}
-          voiceAvgDurationSec={voiceAgent.friction.avgDurationSec ?? 85}
-          hasNoIvr={activeHasNoIvr}
-        />
+            the CXI tiles above show N/A.
+
+            Compute once and pass to both <CostStrip> and <Pitch> below
+            so the dollar figures are guaranteed to match across the
+            two surfaces. */}
+        <CostStrip breakdown={costBreakdown} hasNoIvr={activeHasNoIvr} />
 
         {/* Audit narrative callout — every bullet is computed from the
             actual trees rendered below, so the numbers tally. */}
@@ -772,28 +779,18 @@ export default function App() {
           />
         </div>
 
-        {/* Pitch — uses the same cost numbers as the CostStrip above so
-            the dollar figures match (especially load-bearing for no-IVR
-            tenants whose pitch sentence is cost-led). */}
-        {(() => {
-          const pitchCost = computeCost(
-            active.id,
-            active.workspace ?? 'universities',
-            voiceAgent.friction.avgDurationSec ?? 85
-          );
-          return (
-            <Pitch
-              university={shortName}
-              currentScore={currentFriction.totalScore}
-              voiceAgentScore={voiceAgent.friction.totalScore}
-              voiceCoverage={voiceAgent.friction.selfServiceCoverage}
-              hasNoIvr={activeHasNoIvr}
-              todayCostPerCall={pitchCost.todayCostPerCall}
-              voiceCostPerCall={pitchCost.voiceCostPerCall}
-              annualSavings={pitchCost.annualSavings}
-            />
-          );
-        })()}
+        {/* Pitch — quotes the same cost numbers as the CostStrip above
+            (single computation, single source of truth). */}
+        <Pitch
+          university={shortName}
+          currentScore={currentFriction.totalScore}
+          voiceAgentScore={voiceAgent.friction.totalScore}
+          voiceCoverage={voiceAgent.friction.selfServiceCoverage}
+          hasNoIvr={activeHasNoIvr}
+          todayCostPerCall={costBreakdown.todayCostPerCall}
+          voiceCostPerCall={costBreakdown.voiceCostPerCall}
+          annualSavings={costBreakdown.annualSavings}
+        />
 
         {/* Book a meeting — the campaign CTA. */}
         <div className="mt-5">
