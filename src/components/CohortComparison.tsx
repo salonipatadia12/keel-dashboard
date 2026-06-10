@@ -200,7 +200,13 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
                   className={`absolute inset-y-0 left-0 ${voiceBar.barFill} flex items-center justify-end pr-2.5`}
                   style={{ width: pct(cxiVoice) }}
                 >
-                  <span className="text-[13px] font-bold text-white tabular-nums drop-shadow">
+                  {/* Bar-overlay text picks its color from the band itself
+                      via cellTextSolid (text-ink on bright #FFEF00, white
+                      on red/green dark fills) so yellow bars don't render
+                      white-on-yellow and disappear. */}
+                  <span
+                    className={`text-[13px] font-bold ${voiceBar.cellTextSolid} tabular-nums drop-shadow`}
+                  >
                     {cxiVoice}
                   </span>
                 </div>
@@ -209,7 +215,9 @@ export default function CohortComparison({ rows, activeId, onSelect }: Props) {
                   className={`absolute inset-y-0 left-0 ${todayBar.barFill} flex items-center justify-end pr-2`}
                   style={{ width: pct(cxiToday) }}
                 >
-                  <span className="text-[12px] font-bold text-white tabular-nums drop-shadow">
+                  <span
+                    className={`text-[12px] font-bold ${todayBar.cellTextSolid} tabular-nums drop-shadow`}
+                  >
                     {cxiToday}
                   </span>
                 </div>

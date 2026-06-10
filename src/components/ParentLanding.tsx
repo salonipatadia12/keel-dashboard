@@ -93,19 +93,22 @@ export default function ParentLanding({
               </div>
 
               <div className="grid grid-cols-3 gap-2">
+                {/* Stat tiles pull both bg and text from the band — yellow
+                    cells (#FFEF00) need text-ink to stay readable; red/green
+                    dark cells take text-white via cellTextSolid. */}
                 <div className={`rounded-md border px-2 py-2 ${todayBand.cellBg} ${todayBand.cellBorder}`}>
-                  <div className="text-[8px] uppercase tracking-wider font-semibold text-white/85 mb-1">
+                  <div className={`text-[8px] uppercase tracking-wider font-semibold ${todayBand.cellTextSolid} opacity-85 mb-1`}>
                     Today CXI
                   </div>
-                  <div className="text-lg font-bold tabular-nums text-white leading-none">
+                  <div className={`text-lg font-bold tabular-nums leading-none ${todayBand.cellTextSolid}`}>
                     {Math.round(card.avgCxiToday)}
                   </div>
                 </div>
                 <div className={`rounded-md border px-2 py-2 ${voiceBand.cellBg} ${voiceBand.cellBorder}`}>
-                  <div className="text-[8px] uppercase tracking-wider font-semibold text-white/85 mb-1">
+                  <div className={`text-[8px] uppercase tracking-wider font-semibold ${voiceBand.cellTextSolid} opacity-85 mb-1`}>
                     Voice CXI
                   </div>
-                  <div className="text-lg font-bold tabular-nums text-white leading-none">
+                  <div className={`text-lg font-bold tabular-nums leading-none ${voiceBand.cellTextSolid}`}>
                     {Math.round(card.avgCxiVoice)}
                   </div>
                 </div>
