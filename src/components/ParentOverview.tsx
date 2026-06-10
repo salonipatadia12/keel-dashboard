@@ -167,10 +167,13 @@ export default function ParentOverview({
       {/* Children grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {sorted.map((c) => {
-          const childCxi = cxi(c.currentScore);
-          const childVoiceCxi = cxi(c.voiceAgentScore);
-          const childToday = brandClasses(childCxi);
-          const childVoice = brandClasses(childVoiceCxi);
+          // Only compute CXI badges for children with IVR — no-IVR
+          // children render a "No IVR" pill instead and the numbers
+          // would be synthetic.
+          const childCxi = c.hasNoIvr ? null : cxi(c.currentScore);
+          const childVoiceCxi = c.hasNoIvr ? null : cxi(c.voiceAgentScore);
+          const childToday = childCxi !== null ? brandClasses(childCxi) : null;
+          const childVoice = childVoiceCxi !== null ? brandClasses(childVoiceCxi) : null;
           return (
             <button
               key={c.id}
@@ -199,7 +202,7 @@ export default function ParentOverview({
                   )}
                 </div>
               </div>
-              {!c.hasNoIvr && (
+              {childToday && childVoice && (
                 <div className="flex items-center gap-1.5">
                   <span
                     className={`text-[12px] font-bold tabular-nums px-2 py-1 rounded border ${childToday.pillBg} ${childToday.pillText} ${childToday.pillBorder}`}

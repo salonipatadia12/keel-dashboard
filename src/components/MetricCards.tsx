@@ -77,6 +77,12 @@ interface Props {
   // Always-Available tile's formula tooltip as evidence ("derived from
   // N K-12 lines we've audited").
   workspaceTenantCount: number;
+  // When true, the tenant is on the NO_IVR_IDS allowlist (no real menu —
+  // calls route straight to a human). Today-column numbers derived from
+  // an empty IVR (CXI, wait time, dead-ends, depth) are meaningless for
+  // these lines, so we render "N/A" instead of a synthetic score. Voice
+  // Agent column stays — it's the projected target either way.
+  hasNoIvr: boolean;
 }
 
 export default function MetricCards({
@@ -92,6 +98,7 @@ export default function MetricCards({
   todayQuestionsCovered,
   workspaceId,
   workspaceTenantCount,
+  hasNoIvr,
 }: Props) {
   const questionList = questionListForWorkspace(workspaceId);
   const isK12 = workspaceId === 'k12-districts';
@@ -183,11 +190,15 @@ export default function MetricCards({
           hideIvr={hideIvr}
           icon={<Activity size={14} />}
           label="CXI · Customer Experience Index"
-          today={{
-            value: cxiToday,
-            caption: cxiGrade(cxiToday),
-            band: brandBand(cxiToday),
-          }}
+          today={
+            hasNoIvr
+              ? { value: 'N/A', caption: 'no IVR', band: 'red' }
+              : {
+                  value: cxiToday,
+                  caption: cxiGrade(cxiToday),
+                  band: brandBand(cxiToday),
+                }
+          }
           ivr={{
             value: cxiIvr,
             caption: cxiGrade(cxiIvr),
@@ -198,7 +209,7 @@ export default function MetricCards({
             caption: cxiGrade(cxiVoice),
             band: brandBand(cxiVoice),
           }}
-          delta={{ value: `up ${cxiDelta} pts`, tone: 'good' }}
+          delta={hasNoIvr ? undefined : { value: `up ${cxiDelta} pts`, tone: 'good' }}
           emphasis
           formula={cxiFormula}
         />
@@ -274,11 +285,15 @@ export default function MetricCards({
           hideIvr={hideIvr}
           icon={<Phone size={14} />}
           label="Wait Time"
-          today={{
-            value: fmtDuration(todayWait),
-            caption: todayWaitCaption,
-            band: waitBand(todayWait),
-          }}
+          today={
+            hasNoIvr
+              ? { value: 'N/A', caption: 'no IVR · live hold', band: 'red' }
+              : {
+                  value: fmtDuration(todayWait),
+                  caption: todayWaitCaption,
+                  band: waitBand(todayWait),
+                }
+          }
           ivr={{
             value: fmtDuration(ivrWait),
             caption: 'menu + route',
@@ -289,7 +304,9 @@ export default function MetricCards({
             caption: 'instant intent',
             band: waitBand(voiceWait),
           }}
-          delta={{ value: `${fmtDuration(waitDelta)} saved`, tone: 'good' }}
+          delta={
+            hasNoIvr ? undefined : { value: `${fmtDuration(waitDelta)} saved`, tone: 'good' }
+          }
           emphasis
           formula={waitFormula}
         />
@@ -324,11 +341,15 @@ export default function MetricCards({
           hideIvr={hideIvr}
           icon={<Layers size={14} />}
           label="Menu Levels"
-          today={{
-            value: current.maxDepth,
-            caption: 'levels deep',
-            band: depthBand(current.maxDepth),
-          }}
+          today={
+            hasNoIvr
+              ? { value: 'N/A', caption: 'no menu', band: 'red' }
+              : {
+                  value: current.maxDepth,
+                  caption: 'levels deep',
+                  band: depthBand(current.maxDepth),
+                }
+          }
           ivr={{
             value: recommended.maxDepth,
             caption: 'flat menu',
@@ -339,10 +360,14 @@ export default function MetricCards({
             caption: 'no menu',
             band: depthBand(voiceAgent.maxDepth),
           }}
-          delta={{
-            value: `down ${current.maxDepth - voiceAgent.maxDepth}`,
-            tone: 'good',
-          }}
+          delta={
+            hasNoIvr
+              ? undefined
+              : {
+                  value: `down ${current.maxDepth - voiceAgent.maxDepth}`,
+                  tone: 'good',
+                }
+          }
         />
         <KpiTile
           hideIvr={hideIvr}

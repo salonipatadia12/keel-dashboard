@@ -22,8 +22,10 @@ import CohortComparison, { type CohortRow } from './components/CohortComparison'
 import ParentLanding, { type ParentCard } from './components/ParentLanding';
 import ParentOverview, { type ChildSummary } from './components/ParentOverview';
 import BookMeetingCta from './components/BookMeetingCta';
+import CostStrip from './components/CostStrip';
 import { Activity } from './components/Icons';
 import { SHOW_OPTIMIZED_IVR } from './lib/config';
+import { computeCost } from './lib/cost';
 
 const data = raw as unknown as RawData;
 
@@ -662,8 +664,20 @@ export default function App() {
             todayQuestionsCovered={todayQuestionsCovered}
             workspaceId={active.workspace ?? 'universities'}
             workspaceTenantCount={universities.length}
+            hasNoIvr={activeHasNoIvr}
           />
         </div>
+
+        {/* Cost / ROI — apples-to-apples dollar comparison. Sits below
+            MetricCards so it reads as the next-tier KPI after the UX
+            ones. For no-IVR tenants this is the headline metric since
+            the CXI tiles above show N/A. */}
+        <CostStrip
+          tenantId={active.id}
+          workspaceId={active.workspace ?? 'universities'}
+          voiceAvgDurationSec={voiceAgent.friction.avgDurationSec ?? 85}
+          hasNoIvr={activeHasNoIvr}
+        />
 
         {/* Audit narrative callout — every bullet is computed from the
             actual trees rendered below, so the numbers tally. */}
@@ -758,13 +772,28 @@ export default function App() {
           />
         </div>
 
-        {/* Pitch */}
-        <Pitch
-          university={shortName}
-          currentScore={currentFriction.totalScore}
-          voiceAgentScore={voiceAgent.friction.totalScore}
-          voiceCoverage={voiceAgent.friction.selfServiceCoverage}
-        />
+        {/* Pitch — uses the same cost numbers as the CostStrip above so
+            the dollar figures match (especially load-bearing for no-IVR
+            tenants whose pitch sentence is cost-led). */}
+        {(() => {
+          const pitchCost = computeCost(
+            active.id,
+            active.workspace ?? 'universities',
+            voiceAgent.friction.avgDurationSec ?? 85
+          );
+          return (
+            <Pitch
+              university={shortName}
+              currentScore={currentFriction.totalScore}
+              voiceAgentScore={voiceAgent.friction.totalScore}
+              voiceCoverage={voiceAgent.friction.selfServiceCoverage}
+              hasNoIvr={activeHasNoIvr}
+              todayCostPerCall={pitchCost.todayCostPerCall}
+              voiceCostPerCall={pitchCost.voiceCostPerCall}
+              annualSavings={pitchCost.annualSavings}
+            />
+          );
+        })()}
 
         {/* Book a meeting — the campaign CTA. */}
         <div className="mt-5">
